@@ -19,6 +19,7 @@ setopt inc_append_history
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc" ] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc"
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc" ] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc"
 
+export EDITOR="/usr/bin/nvim"
 
 # Path env variables
 export PATH="$HOME/.local/bin:$PATH"
