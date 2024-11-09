@@ -1,0 +1,8 @@
+#! /usr/bin/bash
+
+
+#echo $MPD_PLAYER_STATE
+
+notify-send -i "/home/senku/.face" "Player" $MPD_PLAYER_STATE
+
+

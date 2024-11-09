@@ -1,0 +1,11 @@
+
+
+
+
+[statusbar]
+progressbar_look = "━━━"
+progressbar_color = "black"
+progressbar_elapsed_color = "white"
+# statusbar_visibility = "no"
+# statusbar_color = "default"
+# song_status_format = "{{%a{ - %t}}|{ - %f}{ - %b{ (%y)}}}"

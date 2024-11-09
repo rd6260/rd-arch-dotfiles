@@ -1,0 +1,156 @@
+#!/bin/bash
+
+alias replasma="kquitapp5 plasmashell && kstart5 plasmashell"
+alias replasma2="killall plasmashell && kstart5 plasmashell"
+
+alias bpkg="pacman -Qq | fzf --preview 'pacman -Qil {}' --layout=reverse --bind 'enter:execute(pacman -Qil {} | less)'"
+alias bpkga="pacman -Slq | fzf --preview 'pacman -Si {}' --layout=reverse"
+
+alias levelup="sudo pacman -Syu && yay -Syu"
+alias yadl="yt-dlp -x --audio-format mp3"
+
+# alias bluebird="dumbpython /home/senku/dev/yajurveda/bluebird/main.py download"
+# alias bb="cd /home/senku/Music && bluebird"
+alias bb="cd /home/senku/Music && dumbpython -m spotdl download"
+
+alias ls="ls --color=auto"
+
+alias nv="nvim"
+
+alias dumbpython="/home/senku/.development/dumbpython/bin/python"
+alias dumbpip="/home/senku/.development/dumbpython/bin/pip"
+
+alias hst="cat ~/.histfile | tac | fzf | tr -d '\n' | xclip -selection c"
+
+alias getpath="find -type f | fzf | sed 's/^..//' | tr -d '\n' | xclip -selection c"
+
+alias copy-to-clipboard="xclip -selection c"
+
+alias please="gum input --password | sudo -nS"
+
+alias activatedumb="source .development/dumbpython/bin/activate"
+
+alias ncm="ncmpcpp --quiet --config ~/.config/ncmpcpp/config-1"
+
+alias what-is-the-disk-usage="du -h --max-depth=1 | sort -rh"
+
+alias ytdl-in-mkv="yt-dlp -f 'bestvideo[height=1080]+bestaudio/best' --merge-output-format mkv"
+
+alias live-alan-becker="gum spin -- mpv 'https://www.youtube.com/@alanbecker/live'"
+
+alias anime="ani-cli"
+
+alias tmux="tmux -u"
+
+# alias gify="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa --align center ~/Pictures/gifs/{})'"
+alias figy="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa  ~/Pictures/gifs/{})'"
+
+alias remove-orphans="pacman -Qdtq | sudo pacman -Rns -"
+
+alias hentai="dumbpython ~/dev/yajurveda/nhentai/nhentai/command.py"
+
+# alias arts="while true; do chafa --align center ~/Downloads/xenotrip/\$(ls -1 ~/Downloads/xenotrip | shuf -n 1) && sleep 5; done"
+alias arts="while true; do chafa ~/Pictures/xenotrip/\$(ls -1 ~/Pictures/xenotrip | shuf -n 1) && sleep 9; done"
+
+alias amegakure-mount="sudo mount /dev/nvme1n1p4 /mnt/amegakure"
+
+alias lt='ls --human-readable --size -1 -S --classify'
+
+alias mirror-phone='scrcpy --shortcut-mod=ralt -S'
+
+alias bonsai="cbonsai -ilS -L 70 -m 'talk is overrated'"
+alias bonsai-no-sleep="cbonsai -il -L 70 -m 'talk is overrated'"
+
+alias source-dumbpython="source ~/.development/dumbpython/bin/activate"
+
+# (set -- $(ip -4 -o addr |awk '$2!~/^lo/'); echo ${4%/*})
+# (set -- $(ip -6 -o addr |awk '$2!~/^lo/'); echo ${4%/*})
+alias ipv4="ip addr show | grep 'inet ' | grep -v '127.0.0.1' | cut -d' ' -f6 | cut -d/ -f1"
+
+alias ipv6="ip addr show | grep 'inet6 ' | cut -d ' ' -f6 | sed -n '2p'"
+
+
+# Remove unused dependencies
+alias autorem='orphans=$(pacman -Qdtq); [ -z "$orphans" ] && echo "There are no orphaned packages" || sudo pacman -Rsc $orphans'
+
+# Show potential upgrades (needs yay)
+alias hmmm='yay -Sy &> /dev/null && yay -Qu'
+
+# Show weather forecast in your city
+alias how-is-the-weather='curl wttr.in/dharwad | head -n -1'
+
+# Print errors from this boot:
+alias this-boot-err='journalctl -b -p err'
+
+alias cal3='cal -3'
+
+alias ff='fastfetch'
+
+# sync watch any movie or show with friend using syncplay
+alias syncwatch="syncplay --no-gui \
+  --host \$(echo 'syncplay.pl:8995\nsyncplay.pl:8996\nsyncplay.pl:8997\nsyncplay.pl:8998\nsyncplay.pl:8999' | fzf) \
+  --name 'rd' \
+  --room 'bora-bora' \
+  --player-path /usr/bin/mpv \
+  \$(find -type f | fzf)"
+
+# Pipes a list of package name and respective description into less
+alias pkglist='pacman -Qs --color=always | less -R'
+
+# Git =========================================================================
+alias gitclone="git clone"
+
+# for managing configs with git bare ripository
+alias config='/usr/bin/git --git-dir=$HOME/.rd-configs/ --work-tree=$HOME'
+
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# Fuzzy find and change directory
+fcd() {
+	cd "$(find -type d | fzf)"
+}
+
+# Fuzzy find a file and open it
+fopen() {
+	x="$(find -type f | fzf-tmux -p)"
+  [[ -n $x ]] && xdg-open $x
+}
+
+# Search Files aNd Drag
+sfnd() {
+	x="$(find -type f | fzf)"
+	ripdrag -xd -H 20 -W 350 $x
+}
+
+# Search Package aNd Install
+spni() {
+	x="$(pacman -Slq | fzf --preview 'pacman -Si {}' --layout=reverse)"
+	[[ -n $x ]] && sudo pacman -S $x
+}
+
+playyt() {
+	mpc add "$(yt-dlp --extract-audio -g -f "bestaudio/best" $1)"
+	mpc play $(mpc playlist | wc -l)
+}
+
+yotest() {
+	theinput="$(cat -)"
+    while IFS= $theinput ; do
+        # Process each line with the provided argument
+	echo "here is the line"
+        echo "$line"
+
+    done
+}
+
+
+
+
+# I used something like that until I decided to automatically cd to the mounted path, and unmount via path as well:
+udm() {
+    cd "$(udisksctl mount -b "$@" | tee /dev/stderr | sed 's/.* at \(.*\)$/\1/')"
+}
+udum() {
+    udisksctl unmount -b "$@" || udisksctl unmount -p "$@"
+}

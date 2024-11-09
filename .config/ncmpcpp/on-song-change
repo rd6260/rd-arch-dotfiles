@@ -1,0 +1,25 @@
+#! /usr/bin/bash
+
+
+# Notify new song name
+song=$(ncmpcpp --quiet --current-song "%A - %t")
+# Send notification on song change
+#notify-send -i music "New song" "$song"
+
+
+#changeSong=$(notify-send -u LOW -t 5000 -a "MyTest" -i music -e -h "string:PlayerHint:It is just to test notification" -A "nextsong=Next" "New song" "$song")
+
+
+# Save new song cover for conky to display
+filePath=$(ncmpcpp --quiet --current-song "%D/%f")
+
+FILE=/home/senku/.config/conky/cover.jpg
+if [ -f "$FILE" ]; then
+#    echo "$FILE exists."
+    rm $FILE
+#else 
+#    echo "$FILE does not exist."
+fi
+
+ffmpeg -loglevel panic -i "/home/senku/Music/$filePath" -an -vcodec copy /tmp/cover.jpg
+
