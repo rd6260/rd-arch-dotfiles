@@ -4,7 +4,10 @@
 # def_key "t"
 #    find_item_forward
 
-def_key "+"
+def_key "ctrl-x"
+    toggle_screen_lock
+
+def_key "9"
     show_clock
 def_key "="
     volume_up
@@ -21,10 +24,10 @@ def_key "ctrl-d"
     page_down
 #push_characters "jjjjjjjjjjjjjjj"
 
-def_key "h"
-    previous_column
 def_key "l"
-    next_column
+    slave_screen
+def_key "h"
+    master_screen
 
 def_key "."
     show_lyrics
@@ -39,3 +42,7 @@ def_key "."
 #     move_sort_order_down
 # def_key "K"
 #     move_sort_order_up
+
+
+
+

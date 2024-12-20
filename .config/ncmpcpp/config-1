@@ -10,6 +10,12 @@ mpd_music_dir     = ~/Music
 visualizer_look = ""
 visualizer_color = "blue"
 
+
+user_interface = alternative
+follow_now_playing_lyrics = yes
+fetch_lyrics_for_current_song_in_background = yes
+autocenter_mode = yes
+
 [header]
 header_visibility = "no"
 header_window_color = "default"
@@ -41,8 +47,17 @@ centered_cursor = "yes"
 enable_window_title = "yes"
 external_editor = "nvim"
 
-execute_on_song_change = bash ~/.local/bin/mpd-on-song-change
+
+startup_screen = lyrics
+startup_slave_screen = playlist
+locked_screen_width_part = 30
+startup_slave_screen_focus = yes
+
+
+
+# execute_on_song_change = bash ~/.local/bin/mpd-on-song-change
 #execute_on_player_state_change = bash ~/.config/ncmpcpp/on-state-change
+visualizer_fps = 144
 
 browser_sort_mode = mtime
 

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+
+# setting kj as esc for zsh-vi-mode plugin
+export ZVM_VI_ESCAPE_BINDKEY="kj"
+
+
+# set nvim to use for viewing manpages
+export MANPAGER="nvim +Man!"
