@@ -1,6 +1,11 @@
 #!/bin/bash
 
 
+# ANDROID
+export ANDROID_HOME="$HOME/.development/android/Android/Sdk"
+export PATH="$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools"
+
+
 
 # setting kj as esc for zsh-vi-mode plugin
 export ZVM_VI_ESCAPE_BINDKEY="kj"
