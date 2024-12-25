@@ -67,9 +67,13 @@ function in {
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env-var" ] && source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env-var"
 
 
-source <(fzf --zsh)
 # Custom shit ends here =======================================================
+
+export PATH="$PATH":"$HOME/.pub-cache/bin"
+source <(fzf --zsh)
 
 
 # Display Pokemon
 pokemon-colorscripts --no-title -r 1,3,6
+
+eval "$(zoxide init --cmd cd zsh)"

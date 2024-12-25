@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Dunst notification
+alias nhis="dunstctl history-pop"
+alias nhisc="dunstctl close-all"
+
+
 # For using gnu stow for dotfile management
 alias stowit='stow --adopt --target=$HOME .'
 
