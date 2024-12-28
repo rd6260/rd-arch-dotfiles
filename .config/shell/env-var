@@ -5,6 +5,8 @@
 export ANDROID_HOME="$HOME/.development/android/Android/Sdk"
 export PATH="$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools"
 
+# flutterfire 
+export PATH="$PATH":"$HOME/.pub-cache/bin"
 
 export EDITOR="nvim"
 
@@ -14,3 +16,7 @@ export ZVM_VI_ESCAPE_BINDKEY="kj"
 
 # set nvim to use for viewing manpages
 export MANPAGER="nvim +Man!"
+
+
+
+

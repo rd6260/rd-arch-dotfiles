@@ -69,7 +69,6 @@ function in {
 
 # Custom shit ends here =======================================================
 
-export PATH="$PATH":"$HOME/.pub-cache/bin"
 source <(fzf --zsh)
 
 
