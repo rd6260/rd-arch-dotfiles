@@ -83,7 +83,7 @@ alias anime="dumbpython -m fastanime"
 alias tmux="tmux -u"
 
 # alias gify="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa --align center ~/Pictures/gifs/{})'"
-alias figy="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa  ~/Pictures/gifs/{})'"
+alias figy="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa --format ansi ~/Pictures/gifs/{})'"
 
 alias remove-orphans="pacman -Qdtq | sudo pacman -Rns -"
 
@@ -98,6 +98,7 @@ alias amegakure-mount="sudo mount /dev/nvme1n1p4 /mnt/amegakure"
 
 alias phone-mirror='scrcpy --shortcut-mod=ralt -S'
 alias phone-otg='scrcpy --shortcut-mod=ralt --otg'
+alias phone-webcam='scrcpy --video-source=camera -m1024 --no-playback --no-audio --v4l2-sink=/dev/video2'
 
 alias bonsai="cbonsai -ilS -L 70 -m 'talk is overrated'"
 alias bonsai-no-sleep="cbonsai -il -L 70 -m 'talk is overrated'"

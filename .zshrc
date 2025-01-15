@@ -69,7 +69,10 @@ function in {
 
 # Custom shit ends here =======================================================
 
+# adding fzf shell integration
 source <(fzf --zsh)
+# for some reason fzf-history-widget wasn't working with `^r` keybinding, so added this
+bindkey '^r' fzf-history-widget
 
 
 # Display Pokemon
