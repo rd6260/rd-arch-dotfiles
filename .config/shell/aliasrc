@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Hyprland display scale
+alias scale-up="hyprctl keyword monitor ',,,1.3'"
+alias scale-down="hyprctl keyword monitor ',,,1.0'"
+
 # Dunst notification
 alias nhis="dunstctl history-pop"
 alias nhisc="dunstctl close-all"
@@ -60,7 +64,7 @@ alias vi="nvim"
 alias dumbpython="/home/senku/.development/dumbpython/bin/python"
 alias dumbpip="/home/senku/.development/dumbpython/bin/pip"
 
-alias hst="cat ~/.histfile | tac | fzf | tr -d '\n' | xclip -selection c"
+alias hst="cat ~/.zsh_history | tac | fzf | tr -d '\n' | xclip -selection c"
 
 alias getpath="find -type f | fzf | sed 's/^..//' | tr -d '\n' | xclip -selection c"
 
