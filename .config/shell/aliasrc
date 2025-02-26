@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# opening files 
+alias open="xdg-open"
+
 # Hyprland display scale
 alias scale-up="hyprctl keyword monitor ',,,1.3'"
 alias scale-down="hyprctl keyword monitor ',,,1.0'"
