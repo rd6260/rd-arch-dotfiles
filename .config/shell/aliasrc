@@ -48,8 +48,8 @@ alias cat="bat -pp"
 #code as codium (flatpak)
 alias code="codium"
 
-alias replasma="kquitapp5 plasmashell && kstart5 plasmashell"
-alias replasma2="killall plasmashell && kstart5 plasmashell"
+# alias replasma="kquitapp5 plasmashell && kstart5 plasmashell"
+# alias replasma2="killall plasmashell && kstart5 plasmashell"
 
 alias bpkg="pacman -Qq | fzf --preview 'pacman -Qil {}' --layout=reverse --bind 'enter:execute(pacman -Qil {} | less)'"
 alias bpkga="pacman -Slq | fzf --preview 'pacman -Si {}' --layout=reverse"
