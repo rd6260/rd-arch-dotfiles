@@ -36,7 +36,7 @@ now_playing() {
 }
 
 vibe_now() {
-  echo "updating currently playing song"
+  echo "updating vibe.json"
   upload "assets/data/vibe.json" "$HOME/.vibe.me.json"
   echo "vibe updated"
 }
