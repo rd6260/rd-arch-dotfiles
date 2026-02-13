@@ -1,0 +1,24 @@
+#!/bin/bash
+
+SNIPPETS_DIR="$HOME/dev/snippets"
+
+# Function to extract language and filename
+list_snippets() {
+    find "$SNIPPETS_DIR" -type f | while read -r file; do
+        lang=$(basename "$(dirname "$file")" | tr '[:lower:]' '[:upper:]')
+        filename=$(basename "$file" | sed 's/\..*$//' | tr '_' ' ')
+        echo "$lang $filename:$file"
+    done
+}
+
+# Use fzf to select a snippet
+selected=$(list_snippets | fzf --preview "bat -pp --color=always {2}" --delimiter ":" --with-nth=1)
+
+# Extract file path
+snippet_file=$(echo "$selected" | cut -d':' -f2-)
+
+# Copy content to clipboard if a file is selected
+if [[ -n "$snippet_file" ]]; then
+    cat "$snippet_file" | cliphist store
+    notify-send "Snippet copied!" "$(basename "$snippet_file") copied to clipboard."
+fi

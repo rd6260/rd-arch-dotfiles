@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+
+SS_DIR="$HOME/Pictures/screenshots"
+FILENAME="$SS_DIR/ss_$(date +%Y%m%d_%H%M%S).png"
+
+# ensure screenshot directory exists
+if [ ! -d "$SS_DIR" ]; then
+  mkdir -p "$SS_DIR"
+fi
+
+screenshot_notify() {
+  [ -f $FILENAME ] && notify-send "Screenshot taken"
+}
+
+# All monitors
+screenshot_all() {
+  grim - | tee $FILENAME | wl-copy 
+}
+
+# Selected area
+screenshot_selective() {
+  AREA=$(slurp -w 0) || exit 0
+  grim -g "$AREA" - | tee "$FILENAME" | wl-copy
+}
+
+# Current monitor
+screenshot_default() {
+  grim - | tee $FILENAME | wl-copy && notify-send "Screenshot taken"
+}
+
+case "$1" in
+  all)
+    screenshot_all
+      ;;
+  selective)
+    screenshot_selective
+      ;;
+  *)
+    screenshot_default
+      ;;
+esac
+
+screenshot_notify

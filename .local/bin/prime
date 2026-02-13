@@ -1,0 +1,20 @@
+#!/bin/bash
+
+SESSION="prime"
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+    tmux -u attach-session -t "$SESSION"
+else
+    tmux new-session -d -s "$SESSION" -n main
+    tmux new-window -t "$SESSION":2 -n second
+    tmux new-window -t "$SESSION":3 -n music 'ncmpcpp'
+    tmux new-window -t "$SESSION":4 -n sysmon 'btm'
+
+    tmux select-window -t "$SESSION":1
+    tmux split-window -h -t "$SESSION":1
+
+    tmux select-pane -L -t "$SESSION":1
+    tmux send-keys -t "$SESSION":1 'fastfetch --logo auto' C-m
+
+    tmux -u attach-session -t "$SESSION"
+fi

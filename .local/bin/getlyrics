@@ -1,0 +1,79 @@
+#! /usr/bin/python
+import json
+# from mpd import MPDClient
+from pathlib import Path
+import subprocess
+
+
+
+def getMetadata(file_path):
+    try:
+        result = subprocess.run(
+            ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', file_path],
+            capture_output=True,
+            text=True,  # Capture output as text (string)
+            check=True  # Raise an error if the command fails
+        )
+        
+        # Load the output as JSON
+        metadata = json.loads(result.stdout)
+        return metadata
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e.stderr.strip()}")
+        return None
+    except json.JSONDecodeError:
+        print("Error decoding JSON output.")
+        return None
+
+def getSong():
+    try:
+        result = subprocess.run(
+            ['mpc', 'current', '-f', '%file%'],
+            capture_output=True,
+            text=True,  # Capture output as text (string)
+            check=True  # Raise an error if the command fails
+        )
+        
+        return result.stdout[::-1][1:][::-1]
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e.stderr.strip()}")
+        return None
+    except json.JSONDecodeError:
+        print("Error decoding JSON output.")
+        return None
+
+
+# client = MPDClient()
+# client.timeout = 10
+# client.idletimeout = None
+# client.connect("localhost", 6600)
+#
+# song = client.currentsong()
+#
+# client.close()
+# client.disconnect()
+
+
+
+# fileName = song["file"]
+fileName = str(getSong())
+fullPath = Path("/home/senku/Music/") / fileName
+filepath = str(fullPath)
+
+
+
+
+
+
+try:
+    metadata = getMetadata(filepath)
+    data = metadata["format"]["tags"]["lyrics-XXX"]
+except KeyError:
+    print("Doesn't have lyrics")
+    exit(0) 
+
+print(data)
+
+

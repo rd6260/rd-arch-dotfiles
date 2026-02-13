@@ -1,0 +1,9 @@
+#! /bin/bash
+
+
+current_transform=$(hyprctl monitors | grep 'transform:' | awk '{print $2}')
+if [ "$current_transform" = "0" ]; then
+    hyprctl keyword monitor ",,,,transform,1"
+else
+    hyprctl keyword monitor ",,,,transform,0"
+fi

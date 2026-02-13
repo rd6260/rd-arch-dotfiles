@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Ensure powerprofilesctl and fzf are installed
+if ! command -v powerprofilesctl &> /dev/null; then
+    echo "Error: powerprofilesctl is not installed."
+    exit 1
+fi
+
+if ! command -v fzf &> /dev/null; then
+    echo "Error: fzf is not installed."
+    exit 1
+fi
+
+# Options to show in fzf
+options=("performance" "balanced" "power-saver" "get")
+
+# Prompt selection
+choice=$(printf "%s\n" "${options[@]}" | fzf-tmux --prompt="Select Power Profile: ")
+
+# Exit if no choice
+[ -z "$choice" ] && exit 0
+
+# Handle selection
+if [ "$choice" = "get" ]; then
+    current=$(powerprofilesctl get)
+    echo "Current power profile: $current"
+else
+    if powerprofilesctl set "$choice"; then
+        echo "Power profile set to: $choice"
+    else
+        echo "Failed to set power profile to: $choice"
+    fi
+fi

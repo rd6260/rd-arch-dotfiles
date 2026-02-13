@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+API_KEY=$(cat ~/.config/neocities/config.json | jq -r '.API_KEY')
+lockfile="/tmp/neoup.lock"
+
+# ---------------------- CHECK PREVIOUS INSTANCE ------------------------------
+exec 200>"$lockfile"
+flock -n 200 || {
+  echo "another instance running, killing old one"
+  old_pid=$(cat "$lockfile.pid" 2>/dev/null)
+  [ -n "$old_pid" ] && kill "$old_pid" 2>/dev/null
+  exec 200>"$lockfile"
+  flock 200
+}
+
+echo $$ > "$lockfile.pid"
+trap 'rm -f "$lockfile" "$lockfile.pid"' EXIT
+# ---------------------- CHECK PREVIOUS INSTANCE ------------------------------
+
+
+upload() {
+  curl -F "$1=@$2" \
+    -H "Authorization: Bearer $API_KEY" \
+    https://neocities.org/api/upload
+}
+
+now_playing() {
+  echo "updating currently playing song"
+  song=$(mpc current -f "%albumartist% - %title%")
+
+  # create the song json file
+  printf '{"song":"%s"}\n' "$song" > /tmp/now_playing.json
+  # upload the jason
+  upload "assets/data/now_playing.json" "/tmp/now_playing.json"
+  echo "currently playing song upload done"
+}
+
+vibe_now() {
+  echo "updating currently playing song"
+  upload "assets/data/vibe.json" "$HOME/.vibe.me.json"
+  echo "vibe updated"
+}
+
+
+
+for arg in "$@"; do
+  case "$arg" in
+    --now-playing | --all)
+      now_playing
+      ;;
+    --vibe-now | -all)
+      vibe_now
+      ;;
+  esac
+done
+
+
+
