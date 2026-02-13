@@ -1,0 +1,24 @@
+[config.wallpaper]
+command = "swww"
+arguments = ["img", "--transition-type", "center"]
+set = true
+# pre_hook = ""
+
+[templates.waybar]
+input_path = '~/.config/matugen/waybar.css'
+output_path = '~/.config/waybar/colors.css'
+post_hook = 'pkill -SIGUSR2 waybar'
+
+[templates.rofi]
+input_path = 'rofi.rasi'
+output_path = '~/.config/rofi/colors.rasi'
+
+[templates.kitty]
+input_path = 'kitty.conf'
+output_path = '~/.config/kitty/theme/matugen-theme.conf'
+post_hook = "kitty +kitten themes --reload-in=all matugen-theme"
+
+[templates.hyprland]
+input_path = 'hyprland.conf'
+output_path = '~/.config/hypr/themes/colors.conf'
+post_hook = 'hyprctl reload'

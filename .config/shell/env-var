@@ -1,0 +1,28 @@
+#!/bin/bash
+
+
+# ANDROID
+export ANDROID_HOME="$HOME/.local/src/Android/Sdk"
+export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools"
+
+# flutter
+export PATH="$PATH:$HOME/.local/src/flutter/bin"
+
+
+# flutterfire 
+export PATH="$PATH":"$HOME/.pub-cache/bin"
+
+# rust cargo bin
+export PATH="$PATH":"$HOME/.cargo/bin"
+
+export EDITOR="nvim"
+
+# setting kj as esc for zsh-vi-mode plugin
+export ZVM_VI_ESCAPE_BINDKEY="kj"
+
+
+# set nvim to use for viewing manpages
+export MANPAGER="nvim +Man!"
+
+# my executables
+export PATH="$PATH":"$HOME/.local/bin"

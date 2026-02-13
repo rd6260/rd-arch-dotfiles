@@ -1,0 +1,259 @@
+#!/bin/bash
+
+yt-jelly() {
+  yt-dlp -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b" \
+  --output "%(uploader)s - %(title)s [%(id)s].%(ext)s" \
+  --embed-metadata \
+  --embed-thumbnail \
+  --embed-chapters \
+  --cookies-from-browser firefox \
+  $1
+
+}
+
+
+now() {
+  timenow=$(date '+%H:%M %d/%m/%Y')
+  echo $timenow
+  wl-copy $timenow
+}
+
+# create a qr code and open it
+qr() {
+  qrencode $1 -o /tmp/qr.png && chafa --align center /tmp/qr.png
+}
+
+
+# Clock in the terminal
+alias clock="tty-clock -c -B"
+
+# Lock the device and turn the screen off
+alias pc-lock="swaylock && hyprctl dispatch dpms off"
+alias pc-unlock="hyprctl dispatch dpms on && pkill -SIGUSR1 swaylock"
+
+# opening files 
+alias open="xdg-open"
+
+# Hyprland display scale
+alias scale-up="hyprctl keyword monitor ',,,1.3'"
+alias scale-down="hyprctl keyword monitor ',,,1.0'"
+
+# Dunst notification
+alias nhis="dunstctl history-pop"
+alias nhisc="dunstctl close-all"
+
+
+# For using gnu stow for dotfile management
+alias stowit='stow --adopt --target=$HOME .'
+
+alias musicplay='mpd; mpd-discord-rpc>>/dev/null &; ncm'
+
+alias fman='compgen -c | fzf-tmux | xargs man'
+
+# Helpful aliases
+alias c='clear' # clear terminal
+alias l='eza -lh --icons=auto' # long list
+alias ls='eza -1 --icons=auto' # short list
+alias ll='eza -lha --icons=auto --sort=name --group-directories-first' # long list all
+alias ld='eza -lhD --icons=auto' # long list dirs
+alias lt='eza --icons=auto --tree' # list folder as tree
+alias un='$aurhelper -Rns' # uninstall package
+alias up='$aurhelper -Syu' # update system/package/aur
+alias pl='$aurhelper -Qs' # list installed package
+alias pa='$aurhelper -Ss' # list available package
+alias pc='$aurhelper -Sc' # remove unused cache
+alias po='$aurhelper -Qtdq | $aurhelper -Rns -' # remove unused packages, also try > $aurhelper -Qqd | $aurhelper -Rsu --print -
+
+# Directory navigation shortcuts
+alias ..='cd ..'
+alias ...='cd ../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+
+# Always mkdir a path (this doesn't inhibit functionality to make a single dir)
+alias mkdir='mkdir -p'
+
+alias cat="bat -pp"
+
+#code as codium (flatpak)
+alias code="codium"
+
+# alias replasma="kquitapp5 plasmashell && kstart5 plasmashell"
+# alias replasma2="killall plasmashell && kstart5 plasmashell"
+
+alias bpkg="pacman -Qq | fzf --preview 'pacman -Qil {}' --layout=reverse --bind 'enter:execute(pacman -Qil {} | less)'"
+alias bpkga="pacman -Slq | fzf --preview 'pacman -Si {}' --layout=reverse"
+
+alias levelup="sudo pacman -Syu && paru -Syu"
+alias yadl="yt-dlp -x --audio-format mp3"
+
+alias bluebird="dumbpython -m spotdl download"
+alias bb="cd /home/senku/Music && bluebird"
+
+
+alias vi="nvim"
+
+alias dumbpython="/home/senku/.local/src/dumbpython/bin/python"
+alias dumbpip="/home/senku/.local/src/dumbpython/bin/pip3"
+
+alias hst="cat ~/.zsh_history | tac | fzf | tr -d '\n' | xclip -selection c"
+
+alias getpath="find -type f | fzf | sed 's/^..//' | tr -d '\n' | xclip -selection c"
+
+alias copy-to-clipboard="xclip -selection c"
+
+alias please="gum input --password | sudo -nS"
+
+alias activatedumb="source ~/.local/src/dumbpython/bin/activate"
+
+alias ncm="ncmpcpp"
+
+alias what-is-the-disk-usage="du -h --max-depth=1 | sort -rh"
+
+alias ytdl-in-mkv="yt-dlp -f 'bestvideo[height=1080]+bestaudio/best' --merge-output-format mkv"
+
+alias live-alan-becker="mpv 'https://www.youtube.com/@alanbecker/live'"
+
+alias anime="dumbpython -m fastanime"
+
+alias tmux="tmux -u"
+
+# alias gify="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa --align center ~/Pictures/gifs/{})'"
+alias figy="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa --center on --format ansi ~/Pictures/gifs/{})'"
+
+alias remove-orphans="pacman -Qdtq | sudo pacman -Rns -"
+
+alias hentai="dumbpython ~/dev/yajurveda/nhentai/nhentai/command.py"
+
+# alias arts="while true; do chafa --align center ~/Downloads/xenotrip/\$(ls -1 ~/Downloads/xenotrip | shuf -n 1) && sleep 5; done"
+alias arts="while true; do chafa --align center --format ansi ~/Pictures/xenotrip/\$(ls -1 ~/Pictures/xenotrip | shuf -n 1) && sleep 9; done"
+
+alias amegakure-mount="sudo mount /dev/nvme1n1p4 /mnt/amegakure"
+
+# alias lt='ls --human-readable --size -1 -S --classify'
+
+alias phone-mirror='scrcpy --shortcut-mod=ralt -S'
+alias phone-otg='scrcpy --shortcut-mod=ralt --otg'
+alias phone-webcam='scrcpy --video-source=camera -m1024 --no-playback --no-audio --v4l2-sink=/dev/video2'
+
+alias bonsai="cbonsai -ilS -L 70 -m 'talk is overrated'"
+alias bonsai-no-sleep="cbonsai -il -L 70 -m 'talk is overrated'"
+
+alias source-dumbpython="source ~/.development/dumbpython/bin/activate"
+
+# (set -- $(ip -4 -o addr |awk '$2!~/^lo/'); echo ${4%/*})
+# (set -- $(ip -6 -o addr |awk '$2!~/^lo/'); echo ${4%/*})
+alias ipv4="ip addr show | grep 'inet ' | grep -v '127.0.0.1' | cut -d' ' -f6 | cut -d/ -f1"
+
+alias ipv6="ip addr show | grep 'inet6 ' | cut -d ' ' -f6 | sed -n '2p'"
+
+
+# Remove unused dependencies
+alias autorem='orphans=$(pacman -Qdtq); [ -z "$orphans" ] && echo "There are no orphaned packages" || sudo pacman -Rsc $orphans'
+
+# Show potential upgrades (needs yay)
+alias hmmm='yay -Sy &> /dev/null && yay -Qu'
+
+# Show weather forecast in your city
+alias how-is-the-weather='curl wttr.in/dharwad | head -n -1'
+
+# Print errors from this boot:
+alias this-boot-err='journalctl -b -p err'
+
+alias cal3='cal -3'
+
+alias ff='fastfetch --logo auto'
+
+# sync watch any movie or show with friend using syncplay
+alias syncwatch="syncplay --no-gui \
+  --host \$(echo 'syncplay.pl:8995\nsyncplay.pl:8996\nsyncplay.pl:8997\nsyncplay.pl:8998\nsyncplay.pl:8999' | fzf) \
+  --name 'rd' \
+  --room 'bora-bora' \
+  --player-path /usr/bin/mpv \
+  \$(find -type f | fzf)"
+
+# Pipes a list of package name and respective description into less
+alias pkglist='pacman -Qs --color=always | less -R'
+
+
+# for managing configs with git bare ripository
+alias config='/usr/bin/git --git-dir=$HOME/dev/yajurveda/rd-arch-dotfiles/.git --work-tree=$HOME'
+
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# Fuzzy find and change directory
+fcd() {
+	cd "$(find -type d | fzf)"
+}
+
+# Fuzzy find a file and open it
+fopen() {
+	x="$(find -type f | fzf-tmux -p)"
+  [[ -n $x ]] && xdg-open $x
+}
+
+# Search Files aNd Drag
+sfnd() {
+	x="$(find -type f | fzf)"
+	ripdrag -xd -H 20 -W 350 $x
+}
+
+# Search Package aNd Install
+spni() {
+	x="$(pacman -Slq | fzf --preview 'pacman -Si {}' --layout=reverse)"
+	[[ -n $x ]] && sudo pacman -S $x
+}
+
+playyt() {
+	mpc add "$(yt-dlp --extract-audio -g -f "bestaudio/best" $1)"
+	mpc play $(mpc playlist | wc -l)
+}
+
+yotest() {
+	theinput="$(cat -)"
+    while IFS= $theinput ; do
+        # Process each line with the provided argument
+	echo "here is the line"
+        echo "$line"
+
+    done
+}
+
+
+
+
+# NOTEL this is from someone else i found a reddit post
+# I used something like that until I decided to automatically cd to the mounted path, and unmount via path as well:
+udm() {
+    cd "$(udisksctl mount -b "$@" | tee /dev/stderr | sed 's/.* at \(.*\)$/\1/')"
+}
+udum() {
+    udisksctl unmount -b "$@" || udisksctl unmount -p "$@"
+}
+
+
+#open scratch notes
+ntest() {
+  choice=$(printf "Python\nGo\nText\nEtc" | fzf-tmux --prompt="Choose a file type: ")
+
+  case $choice in
+    Python)
+      nvim ~/dev/test.py
+      ;;
+    Text)
+      nvim ~/dev/test.txt
+      ;;
+    Go)
+      nvim ~/dev/test.go
+      ;;
+    Etc)
+      nvim ~/dev/test.md
+      ;;
+    *)
+      echo "Invalid choice. Exiting."
+      exit 1
+      ;;
+  esac
+}

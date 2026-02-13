@@ -1,0 +1,7 @@
+[init]
+	defaultBranch = main
+[user]
+	name = rd
+	email = rohandas.zero@gmail.com
+[core]
+	pager = nvimpager
