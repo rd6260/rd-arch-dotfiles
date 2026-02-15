@@ -33,6 +33,11 @@ function zvm_after_init() {
   bindkey '^R' fzf-history-widget
 }
 
+# custom command not found message FAHHHH!
+command_not_found_handler() {
+  echo "FAHHHH! command not found: $1"
+  return 127
+}
 
 # adding fzf shell integration
 source <(fzf --zsh)
