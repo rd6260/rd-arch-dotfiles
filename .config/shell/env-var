@@ -26,3 +26,6 @@ export MANPAGER="nvim +Man!"
 
 # my executables
 export PATH="$PATH":"$HOME/.local/bin"
+
+# golang
+export GOPATH="$HOME/.go"
