@@ -1,8 +1,6 @@
 [config.wallpaper]
-command = "swww"
-arguments = ["img", "--transition-type", "center"]
+command = "swww img --transition-type center {{ image }}"
 set = true
-# pre_hook = ""
 
 [templates.waybar]
 input_path = '~/.config/matugen/waybar.css'
@@ -16,7 +14,7 @@ output_path = '~/.config/rofi/colors.rasi'
 [templates.kitty]
 input_path = 'kitty.conf'
 output_path = '~/.config/kitty/theme/matugen-theme.conf'
-post_hook = "kitty +kitten themes --reload-in=all matugen-theme"
+post_hook = "pkill -SIGUSR1 kitty"
 
 [templates.hyprland]
 input_path = 'hyprland.conf'
