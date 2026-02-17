@@ -1,5 +1,7 @@
 #!/bin/bash
 
+alias livewall='mpvpaper -o '\''--loop-file=inf --ytdl-format="bestvideo[height=1080]"'\'' all'
+
 yt-jelly() {
   yt-dlp -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b" \
   --output "%(uploader)s - %(title)s [%(id)s].%(ext)s" \
