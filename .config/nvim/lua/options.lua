@@ -6,5 +6,6 @@ require "nvchad.options"
 -- o.cursorlineopt ='both' -- to enable cursorline!
 
 vim.opt.relativenumber = true
+vim.opt.colorcolumn = "80"
 
 

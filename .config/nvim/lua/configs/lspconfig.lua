@@ -1,6 +1,30 @@
 require("nvchad.configs.lspconfig").defaults()
 
-local servers = { "html", "cssls", "gopls", "pyright" }
-vim.lsp.enable(servers)
+-- <leader>ca for Dart files only (hooked via LspAttach for reliability)
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client and client.name == "dartls" then
+      vim.keymap.set("n", "<leader>ca", function() vim.lsp.buf.code_action() end, {
+        buffer = args.buf,
+        desc = "LSP Code action (Dart)",
+      })
+    end
+  end,
+})
 
--- read :h vim.lsp.config for changing options of lsp servers 
+-- config before enable
+vim.lsp.config("dartls", {
+  settings = {
+    dart = {
+      completeFunctionCalls = true,
+      showTodos = true,
+      analysisExcludedFolders = {
+        vim.fn.expand("$HOME/.pub-cache/"),
+      },
+    },
+  },
+})
+
+local servers = { "html", "cssls", "gopls", "pyright", "vtsls", "dartls" }
+vim.lsp.enable(servers)
