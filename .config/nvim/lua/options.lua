@@ -8,4 +8,5 @@ require "nvchad.options"
 vim.opt.relativenumber = true
 vim.opt.colorcolumn = "80"
 
-
+-- Flutter run (toggle terminal + hot reload)
+require "configs.flutter"
