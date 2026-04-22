@@ -91,7 +91,7 @@ alias levelup="sudo pacman -Syu && paru -Syu"
 alias yadl="yt-dlp -x --audio-format mp3"
 
 alias bluebird="dumbpython -m spotdl download"
-alias bb="cd /home/senku/Music && bluebird"
+alias bb="spotdl --audio=piped download"
 
 
 alias vi="nvim"
@@ -185,6 +185,17 @@ alias config='/usr/bin/git --git-dir=$HOME/dev/yajurveda/rd-arch-dotfiles/.git -
 # =============================================================================
 # =============================================================================
 # =============================================================================
+
+# provides the ability to change the current working directory when exiting Yazi
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
+
 # Fuzzy find and change directory
 fcd() {
 	cd "$(find -type d | fzf)"
