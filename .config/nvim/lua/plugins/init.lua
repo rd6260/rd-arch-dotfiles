@@ -105,4 +105,12 @@ return {
       vim.g.vimtex_view_method = "zathura"
     end,
   },
+
+  {
+    "vyfor/cord.nvim",
+    event='VeryLazy',
+    config = function()
+      require("cord").setup()
+    end,
+  },
 }
