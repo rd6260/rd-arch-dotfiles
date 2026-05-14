@@ -1,4 +1,4 @@
 [[mgr.prepend_keymap]]
 on  = ["<A-d>"]
-run = 'shell -- ripdrag -xd -H 20 -W 350 $@'
+run = 'shell -- ripdrag -xd -W 350 $@'
 desc = "Drag files with ripdrag"
