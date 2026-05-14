@@ -400,6 +400,69 @@ Variants {
                                 }
                             }
                         }
+                        // --- Action Buttons ---
+                        Row {
+                            width: parent.width
+                            spacing: 8
+                            visible: {
+                                if (!notificationEntry.actions)
+                                    return false;
+                                // Show row only if there are non-default actions
+                                for (let i = 0; i < notificationEntry.actions.length; i++) {
+                                    if (notificationEntry.actions[i].identifier !== "default")
+                                        return true;
+                                }
+                                return false;
+                            }
+
+                            Repeater {
+                                model: {
+                                    if (!notificationEntry.actions)
+                                        return [];
+                                    // Filter out the "default" action — it's triggered by card click
+                                    return notificationEntry.actions.filter(a => a.identifier !== "default");
+                                }
+
+                                delegate: Rectangle {
+                                    required property var modelData   // each action object
+                                    height: 28
+                                    width: Math.max(80, actionLabel.implicitWidth + 24)
+                                    radius: 6
+                                    color: actionMouseArea.pressed ? Qt.darker(Theme.secondary_container, 1.1) : actionMouseArea.containsMouse ? Theme.secondary_container : "transparent"
+                                    border.width: 1
+                                    border.color: Theme.outline_variant
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 120
+                                        }
+                                    }
+
+                                    Text {
+                                        id: actionLabel
+                                        anchors.centerIn: parent
+                                        text: modelData.text     // the human-readable label
+                                        color: Theme.on_surface
+                                        font {
+                                            family: "Google Sans Medium"
+                                            pointSize: 9
+                                        }
+                                        elide: Text.ElideRight
+                                    }
+
+                                    MouseArea {
+                                        id: actionMouseArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: event => {
+                                            event.accepted = true;   // don't bubble to card's MouseArea
+                                            modelData.invoke();
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
