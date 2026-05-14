@@ -17,7 +17,7 @@ Rectangle {
 
     // --- Layout Configuration ---
     implicitWidth: contentLayout.width + 30
-    implicitHeight: contentLayout.height + 18
+    implicitHeight: Layout.islandHeight
     color: Theme.surface_container
     radius: height / 2
 
@@ -37,7 +37,7 @@ Rectangle {
     Row {
         id: contentLayout
         anchors.centerIn: parent
-        spacing: 16
+        spacing: 12
 
         // --- System Tray Module ---
         Row {
@@ -48,7 +48,7 @@ Rectangle {
             // Collapsible container for tray items
             Item {
                 id: trayContainer
-                height: 24
+                height: contentLayout.height
                 width: root.isTrayExpanded ? trayContent.width : 0
                 clip: true
 
@@ -70,8 +70,8 @@ Rectangle {
 
                         delegate: Rectangle {
                             id: trayItemRect
-                            width: 24
-                            height: 24
+                            width: 20
+                            height: 20
                             color: "transparent"
                             radius: 4
 
@@ -86,10 +86,10 @@ Rectangle {
 
                             Image {
                                 anchors.centerIn: parent
-                                width: 16
-                                height: 16
+                                width: 14
+                                height: 14
                                 source: modelData.icon
-                                sourceSize: Qt.size(16, 16)
+                                sourceSize: Qt.size(14, 14)
                             }
 
                             QsMenuAnchor {
@@ -131,7 +131,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 font {
                     family: "JetBrainsMono Nerd Font"
-                    pixelSize: 16
+                    pointSize: 10
                 }
                 color: trayToggleHover.hovered ? Theme.primary : Theme.on_surface_variant
                 text: "" // Angle left
@@ -174,7 +174,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 font {
                     family: "JetBrainsMono Nerd Font"
-                    pixelSize: 16
+                    pointSize: 10
                 }
                 color: root.isMuted ? Theme.critical : Theme.primary
 
@@ -197,7 +197,7 @@ Rectangle {
                 color: Theme.on_surface
                 font {
                     family: "Google Sans Medium"
-                    pixelSize: 16
+                    pointSize: 10
                 }
                 text: root.activeSink?.audio ? Math.round(root.volumeLevel * 100) + "%" : "--%"
             }
@@ -234,7 +234,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 font {
                     family: "JetBrainsMono Nerd Font"
-                    pixelSize: 16
+                    pointSize: 10
                 }
 
                 color: (batteryModule.isCharging && batteryModule.capacity < 100) || batteryModule.capacity <= 20 ? Theme.critical : Theme.primary
@@ -265,7 +265,7 @@ Rectangle {
                 color: Theme.on_surface
                 font {
                     family: "Google Sans Medium"
-                    pixelSize: 16
+                    pointSize: 10
                 }
                 text: Math.round(batteryModule.capacity) + "%"
             }

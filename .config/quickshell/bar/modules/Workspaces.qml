@@ -13,12 +13,12 @@ Rectangle {
 
     readonly property int animDurationShort: 150
     readonly property int animDurationLong: 200
-    readonly property int dotHeight: 20
+    readonly property int dotHeight: 10
     readonly property int spacingAmount: 10
 
     // --- Styling ---
     implicitWidth: mainLayout.width + 30
-    implicitHeight: mainLayout.height + 18
+    implicitHeight: Layout.islandHeight
     color: Theme.surface_container
     radius: height / 2
 
@@ -41,10 +41,10 @@ Rectangle {
                     if (!visible)
                         return 0;
                     if (modelData.focused || modelData.active)
-                        return 40;
-                    if (dotMouseArea.hovered)
                         return 32;
-                    return 24;
+                    if (dotMouseArea.hovered)
+                        return 28;
+                    return 20;
                 }
 
                 height: root.dotHeight

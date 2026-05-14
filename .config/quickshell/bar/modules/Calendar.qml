@@ -10,7 +10,7 @@ Rectangle {
 
     // --- Dimensions ---
     implicitWidth: timeLabel.contentWidth + 20
-    implicitHeight: timeLabel.contentHeight + 15
+    implicitHeight: Layout.islandHeight
 
     // --- Styling ---
     color: Theme.surface_container
