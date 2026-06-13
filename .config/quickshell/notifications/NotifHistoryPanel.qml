@@ -31,12 +31,12 @@ Variants {
 
         anchors {
             top: true
+            left: true
             right: true
             bottom: true
         }
 
         color: "transparent"
-        implicitWidth: panelWidth + 32
 
         // --- Panel Constants ---
         readonly property int panelWidth: 400
@@ -45,9 +45,15 @@ Variants {
         // Close on Escape key
         Keys.onEscapePressed: NotifHistoryService.panelOpen = false
 
-        // --- Scrim (click-to-dismiss overlay) ---
+        // --- Scrim (click-to-dismiss background) ---
+        // Covers the entire window except the panel itself
         MouseArea {
-            anchors.fill: parent
+            anchors {
+                top: parent.top
+                left: parent.left
+                bottom: parent.bottom
+                right: panelSlide.left
+            }
             onClicked: NotifHistoryService.panelOpen = false
             z: 0
         }

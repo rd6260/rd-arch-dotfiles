@@ -170,6 +170,7 @@ Rectangle {
         Row {
             id: volumeModule
             spacing: 8
+            anchors.verticalCenter: parent.verticalCenter
 
             Text {
                 id: volumeIcon
@@ -224,6 +225,7 @@ Rectangle {
         Row {
             id: batteryModule
             spacing: 8
+            anchors.verticalCenter: parent.verticalCenter
 
             readonly property bool isVisible: UPower.displayDevice?.isPresent ?? false
             readonly property real capacity: (UPower.displayDevice?.percentage ?? 0) * 100
