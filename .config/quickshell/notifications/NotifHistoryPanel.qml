@@ -2,13 +2,12 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
 import "../theme"
 import "."
 
 /**
- * Full-screen overlay that renders the notification history panel
- * as a right-side drawer, similar to the notification popup style.
+ * Notification history side panel, constrained within the BezelsMask workspace area.
+ * Slides in from the right; slides out on close.
  */
 Variants {
     id: root
@@ -19,9 +18,6 @@ Variants {
 
         required property var modelData
         screen: modelData
-
-        // --- Visibility ---
-        visible: NotifHistoryService.panelOpen
 
         // --- LayerShell Configuration ---
         WlrLayershell.layer: WlrLayer.Overlay
@@ -36,101 +32,138 @@ Variants {
             bottom: true
         }
 
+        // Inset within the BezelsMask workspace boundary
+        margins {
+            top: Layout.topBarHeight
+            bottom: Layout.bottomBarHeight
+            left: Layout.sideBarWidth
+            right: Layout.sideBarWidth
+        }
+
         color: "transparent"
 
         // --- Panel Constants ---
         readonly property int panelWidth: 400
         readonly property int headerHeight: 56
+        readonly property int animDuration: 300
+
+        // --- Visibility gating ---
+        // Keep window alive until slide-out animation completes
+        property bool _showing: false
+        visible: _showing
+
+        Connections {
+            target: NotifHistoryService
+            function onPanelOpenChanged() {
+                if (NotifHistoryService.panelOpen) {
+                    historyOverlay._showing = true;
+                    slideInAnim.restart();
+                } else {
+                    slideOutAnim.restart();
+                }
+            }
+        }
 
         // Close on Escape key
         Keys.onEscapePressed: NotifHistoryService.panelOpen = false
 
-        // --- Scrim (click-to-dismiss background) ---
-        // Covers the entire window except the panel itself
+        // --- Panel slide position ---
+        property real slideX: panelWidth + 32   // starts off-screen right
+
+        NumberAnimation {
+            id: slideInAnim
+            target: historyOverlay
+            property: "slideX"
+            to: 0
+            duration: historyOverlay.animDuration
+            easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            id: slideOutAnim
+            target: historyOverlay
+            property: "slideX"
+            to: historyOverlay.panelWidth + 32
+            duration: historyOverlay.animDuration
+            easing.type: Easing.InCubic
+            onFinished: historyOverlay._showing = false
+        }
+
+        // --- Scrim (click-to-dismiss) ---
         MouseArea {
             anchors {
                 top: parent.top
                 left: parent.left
                 bottom: parent.bottom
-                right: panelSlide.left
+                right: panelContainer.left
             }
             onClicked: NotifHistoryService.panelOpen = false
             z: 0
+            // Subtle semi-transparent scrim tint
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.scrim
+                opacity: 0.18
+            }
         }
 
-        // --- Animated Panel ---
+        // --- Panel Container ---
         Item {
-            id: panelSlide
+            id: panelContainer
             anchors {
                 top: parent.top
                 right: parent.right
                 bottom: parent.bottom
             }
             width: historyOverlay.panelWidth
-            clip: false
+            clip: true
             z: 1
 
-            // Slide-in/out animation
-            property real slideOffset: NotifHistoryService.panelOpen ? 0 : historyOverlay.panelWidth + 32
-            Behavior on slideOffset {
-                NumberAnimation {
-                    duration: 320
-                    easing.type: Easing.OutCubic
-                }
-            }
             transform: Translate {
-                x: panelSlide.slideOffset
+                x: historyOverlay.slideX
             }
 
-            // --- Panel Background (Glassmorphism) ---
+            // === Background ===
             Rectangle {
                 id: panelBg
                 anchors.fill: parent
                 color: Theme.surface_container_low
-                opacity: 0.97
+                radius: 0
 
-                // Left rounded corners only
+                // Top-left rounded corner
                 Rectangle {
-                    anchors {
-                        top: parent.top
-                        bottom: parent.bottom
-                        left: parent.left
-                    }
-                    width: parent.width
-                    radius: 16
-                    color: parent.color
-
-                    // Mask the right side to be flat
+                    anchors.fill: parent
+                    color: Theme.surface_container_low
+                    radius: Layout.cornerRadius + 2
+                    // Square off the right and bottom edges
                     Rectangle {
-                        anchors {
-                            top: parent.top
-                            bottom: parent.bottom
-                            right: parent.right
-                        }
-                        width: 16
+                        anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
+                        width: Layout.cornerRadius + 2
+                        color: parent.color
+                    }
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                        height: Layout.cornerRadius + 2
                         color: parent.color
                     }
                 }
             }
 
-            // Subtle left border glow
+            // Subtle left border
             Rectangle {
-                anchors {
-                    top: parent.top
-                    bottom: parent.bottom
-                    left: parent.left
-                }
+                anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
                 width: 1
                 color: Theme.outline_variant
                 opacity: 0.6
             }
 
-            // --- Content ---
+
+            // === Content ===
             Column {
                 anchors.fill: parent
                 spacing: 0
 
-                // === Header ===
+                // --- Header ---
                 Item {
                     width: parent.width
                     height: historyOverlay.headerHeight
@@ -141,19 +174,20 @@ Variants {
                             bottom: parent.bottom
                             left: parent.left
                             right: parent.right
-                            leftMargin: 20
-                            rightMargin: 20
+                            leftMargin: 16
+                            rightMargin: 16
                         }
                         height: 1
                         color: Theme.outline_variant
-                        opacity: 0.5
+                        opacity: 0.4
                     }
 
+                    // Left: Bell icon + Title + Count
                     Row {
                         anchors {
                             left: parent.left
                             verticalCenter: parent.verticalCenter
-                            leftMargin: 24
+                            leftMargin: 20
                         }
                         spacing: 10
 
@@ -162,7 +196,7 @@ Variants {
                             text: "󰂚"
                             font {
                                 family: "JetBrainsMono Nerd Font"
-                                pointSize: 16
+                                pointSize: 15
                             }
                             color: Theme.primary
                         }
@@ -172,53 +206,58 @@ Variants {
                             text: "Notifications"
                             font {
                                 family: "Google Sans Medium"
-                                pointSize: 14
+                                pointSize: 13
                             }
                             color: Theme.on_surface
                         }
 
-                        Text {
+                        // Count pill
+                        Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: NotifHistoryService.allNotifications.length > 0
-                                  ? "(" + NotifHistoryService.allNotifications.length + ")"
-                                  : ""
-                            font {
-                                family: "Google Sans"
-                                pointSize: 11
+                            visible: NotifHistoryService.allNotifications.length > 0
+                            height: 18
+                            width: Math.max(22, countPillText.implicitWidth + 10)
+                            radius: 9
+                            color: Theme.primary_container
+
+                            Text {
+                                id: countPillText
+                                anchors.centerIn: parent
+                                text: NotifHistoryService.allNotifications.length
+                                font {
+                                    family: "Google Sans Medium"
+                                    pointSize: 8
+                                }
+                                color: Theme.on_primary_container
                             }
-                            color: Theme.on_surface_variant
                         }
                     }
 
-                    // Action Buttons (Clear All + Close)
+                    // Right: Clear All + Close
                     Row {
                         anchors {
                             right: parent.right
                             verticalCenter: parent.verticalCenter
-                            rightMargin: 16
+                            rightMargin: 14
                         }
                         spacing: 4
 
-                        // Clear All button
+                        // Clear All
                         Rectangle {
                             visible: NotifHistoryService.allNotifications.length > 0
-                            height: 28
-                            width: clearLabel.implicitWidth + 20
-                            radius: 8
+                            height: 26
+                            width: clearLabel.implicitWidth + 18
+                            radius: 7
                             color: clearHover.containsMouse ? Theme.secondary_container : "transparent"
                             border.width: 1
                             border.color: clearHover.containsMouse ? "transparent" : Theme.outline_variant
-
                             Behavior on color { ColorAnimation { duration: 150 } }
 
                             Text {
                                 id: clearLabel
                                 anchors.centerIn: parent
                                 text: "Clear all"
-                                font {
-                                    family: "Google Sans Medium"
-                                    pointSize: 9
-                                }
+                                font { family: "Google Sans Medium"; pointSize: 9 }
                                 color: clearHover.containsMouse ? Theme.on_secondary_container : Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: 150 } }
                             }
@@ -232,21 +271,18 @@ Variants {
                             }
                         }
 
-                        // Close button
+                        // Close (×)
                         Rectangle {
-                            width: 28
-                            height: 28
-                            radius: 8
-                            color: closeHover.containsMouse ? Qt.lighter(Theme.surface_variant, 1.1) : "transparent"
+                            width: 26
+                            height: 26
+                            radius: 7
+                            color: closeHover.containsMouse ? Theme.surface_container_highest : "transparent"
                             Behavior on color { ColorAnimation { duration: 150 } }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "×"
-                                font {
-                                    pixelSize: 20
-                                    bold: true
-                                }
+                                font { pixelSize: 18; bold: true }
                                 color: closeHover.containsMouse ? Theme.on_surface : Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: 150 } }
                             }
@@ -262,13 +298,13 @@ Variants {
                     }
                 }
 
-                // === Scrollable content ===
+                // --- Scrollable Content ---
                 Flickable {
                     id: scrollArea
                     width: parent.width
                     height: parent.height - historyOverlay.headerHeight
                     clip: true
-                    contentHeight: scrollContent.implicitHeight + 24
+                    contentHeight: scrollContent.implicitHeight + 20
                     contentWidth: width
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
@@ -279,56 +315,55 @@ Variants {
                         width: parent.width
                         spacing: 0
 
-                        // --- Empty State ---
+                        // Empty State
                         Item {
                             width: parent.width
-                            height: 200
+                            height: 220
                             visible: NotifHistoryService.allNotifications.length === 0
 
                             Column {
                                 anchors.centerIn: parent
-                                spacing: 12
+                                spacing: 14
 
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: "󰂛"
-                                    font {
-                                        family: "JetBrainsMono Nerd Font"
-                                        pointSize: 36
-                                    }
-                                    color: Theme.outline
+                                    font { family: "JetBrainsMono Nerd Font"; pointSize: 40 }
+                                    color: Theme.outline_variant
                                 }
 
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     text: "No notifications"
-                                    font {
-                                        family: "Google Sans"
-                                        pointSize: 12
-                                    }
+                                    font { family: "Google Sans"; pointSize: 12 }
                                     color: Theme.outline
+                                }
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: "Notifications will appear here"
+                                    font { family: "Google Sans"; pointSize: 9 }
+                                    color: Theme.outline_variant
                                 }
                             }
                         }
 
-                        // --- Recent Section ---
+                        // Recent Section
                         Column {
-                            id: recentSection
                             width: parent.width
                             spacing: 0
                             visible: NotifHistoryService.allNotifications.length > 0
 
-                            // Section Label
                             Item {
                                 width: parent.width
-                                height: 40
+                                height: 38
 
                                 Text {
                                     anchors {
                                         left: parent.left
                                         bottom: parent.bottom
-                                        leftMargin: 24
-                                        bottomMargin: 8
+                                        leftMargin: 20
+                                        bottomMargin: 7
                                     }
                                     text: "RECENT"
                                     font {
@@ -342,7 +377,6 @@ Variants {
 
                             Repeater {
                                 model: Math.min(NotifHistoryService.latestCount, NotifHistoryService.allNotifications.length)
-
                                 delegate: HistoryNotifCard {
                                     required property int index
                                     notification: NotifHistoryService.allNotifications[index]
@@ -352,38 +386,35 @@ Variants {
                             }
                         }
 
-                        // --- App Groups Section ---
+                        // By App Section
                         Column {
-                            id: appGroupsSection
                             width: parent.width
                             spacing: 0
                             visible: NotifHistoryService.groupedByApp.length > 0
 
-                            // Section Label
                             Item {
                                 width: parent.width
-                                height: 44
+                                height: 42
 
-                                // Top divider
                                 Rectangle {
                                     anchors {
                                         top: parent.top
                                         left: parent.left
                                         right: parent.right
-                                        leftMargin: 20
-                                        rightMargin: 20
+                                        leftMargin: 16
+                                        rightMargin: 16
                                     }
                                     height: 1
                                     color: Theme.outline_variant
-                                    opacity: 0.4
+                                    opacity: 0.3
                                 }
 
                                 Text {
                                     anchors {
                                         left: parent.left
                                         bottom: parent.bottom
-                                        leftMargin: 24
-                                        bottomMargin: 8
+                                        leftMargin: 20
+                                        bottomMargin: 7
                                     }
                                     text: "BY APP"
                                     font {
@@ -397,7 +428,6 @@ Variants {
 
                             Repeater {
                                 model: NotifHistoryService.groupedByApp
-
                                 delegate: AppGroupSection {
                                     required property var modelData
                                     required property int index
@@ -407,11 +437,7 @@ Variants {
                             }
                         }
 
-                        // Bottom padding
-                        Item {
-                            width: parent.width
-                            height: 24
-                        }
+                        Item { width: parent.width; height: 20 }
                     }
                 }
             }
