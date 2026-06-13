@@ -2,9 +2,11 @@ pragma Singleton
 
 import QtQuick
 import Quickshell.Services.Notifications
+import "."
 
 /**
  * Singleton service providing a centralized interface for D-Bus notification signals.
+ * Also feeds all incoming notifications into NotifHistoryService for history tracking.
  */
 NotificationServer {
     id: centralNotificationServer
@@ -22,5 +24,8 @@ NotificationServer {
     onNotification: notification => {
         // Enables automatic management within the trackedNotifications ObjectModel
         notification.tracked = true;
+
+        // Store in persistent history
+        NotifHistoryService.addNotification(notification);
     }
 }

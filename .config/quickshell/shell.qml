@@ -35,6 +35,11 @@ ShellRoot {
         id: notificationOverlay
     }
 
+    // Notification history side panel
+    NotifHistoryPanel {
+        id: notifHistoryPanel
+    }
+
     // Clipboard
     Clipboard {
         id: clipboardWindow

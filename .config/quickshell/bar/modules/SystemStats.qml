@@ -6,6 +6,7 @@ import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
 import qs.theme
 import Quickshell.Bluetooth
+import qs.notifications
 
 /**
  * A unified system status indicator for Audio (Pipewire) and Power (UPower).
@@ -269,6 +270,87 @@ Rectangle {
                     pointSize: 10
                 }
                 text: Math.round(batteryModule.capacity) + "%"
+            }
+        }
+
+        // --- Separator ---
+        Rectangle {
+            width: 1
+            height: 16
+            color: Theme.outline_variant
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        // --- Notification History Button ---
+        Item {
+            id: notifHistoryBtn
+            width: 28
+            height: 28
+            anchors.verticalCenter: parent.verticalCenter
+
+            readonly property bool hasNotifs: NotifHistoryService.allNotifications.length > 0
+            readonly property bool isOpen: NotifHistoryService.panelOpen
+
+            // Background highlight
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.height / 2
+                color: notifBtnHover.containsMouse || notifHistoryBtn.isOpen
+                       ? Theme.primary_container
+                       : "transparent"
+                Behavior on color { ColorAnimation { duration: 180 } }
+            }
+
+            // Bell icon
+            Text {
+                anchors.centerIn: parent
+                text: notifHistoryBtn.isOpen ? "󰂚" : (notifHistoryBtn.hasNotifs ? "󰂚" : "󰂛")
+                font {
+                    family: "JetBrainsMono Nerd Font"
+                    pointSize: 12
+                }
+                color: notifHistoryBtn.isOpen
+                       ? Theme.on_primary_container
+                       : (notifHistoryBtn.hasNotifs ? Theme.primary : Theme.on_surface_variant)
+                Behavior on color { ColorAnimation { duration: 180 } }
+            }
+
+            // Unread count badge
+            Rectangle {
+                visible: notifHistoryBtn.hasNotifs && !notifHistoryBtn.isOpen
+                anchors {
+                    top: parent.top
+                    right: parent.right
+                    topMargin: 1
+                    rightMargin: 1
+                }
+                width: Math.max(14, badgeCount.implicitWidth + 6)
+                height: 14
+                radius: 7
+                color: Theme.critical
+
+                Text {
+                    id: badgeCount
+                    anchors.centerIn: parent
+                    text: NotifHistoryService.allNotifications.length > 99
+                          ? "99+"
+                          : NotifHistoryService.allNotifications.length
+                    font {
+                        family: "Google Sans Medium"
+                        pixelSize: 8
+                        bold: true
+                    }
+                    color: Theme.on_critical
+                }
+            }
+
+            HoverHandler {
+                id: notifBtnHover
+            }
+
+            TapHandler {
+                cursorShape: Qt.PointingHandCursor
+                onTapped: NotifHistoryService.panelOpen = !NotifHistoryService.panelOpen
             }
         }
     }
