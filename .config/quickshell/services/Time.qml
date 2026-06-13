@@ -8,7 +8,8 @@ Singleton {
     id: root
 
     // Formatted string
-    readonly property string time: Qt.formatDateTime(clock.date, "  H:mm  •  ddd  MMM d  ")
+    // readonly property string time: Qt.formatDateTime(clock.date, "  H:mm  •  ddd  MMM d  ")
+    readonly property string time: Qt.formatDateTime(clock.date, " H:mm • ddd d ")
 
     // Reactive clock source tracking seconds.
     SystemClock {

@@ -5,6 +5,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
 import qs.theme
+import Quickshell.Bluetooth
 
 /**
  * A unified system status indicator for Audio (Pipewire) and Power (UPower).
@@ -182,12 +183,12 @@ Rectangle {
                     if (!root.activeSink?.audio)
                         return ""; // No device
                     if (root.isMuted)
-                        return "";           // Muted
+                        return ""; // Muted
                     if (root.volumeLevel >= 0.6)
                         return ""; // High
                     if (root.volumeLevel >= 0.3)
                         return ""; // Mid
-                    return "";                              // Low
+                    return "";     // Low
                 }
             }
 
