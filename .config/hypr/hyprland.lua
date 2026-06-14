@@ -10,17 +10,17 @@
 -- require("myColors")
 
 ------------------
--- ███    ███  ██████  ███    ██ ██ ████████  ██████  ██████  ███████ 
--- ████  ████ ██    ██ ████   ██ ██    ██    ██    ██ ██   ██ ██      
--- ██ ████ ██ ██    ██ ██ ██  ██ ██    ██    ██    ██ ██████  ███████ 
--- ██  ██  ██ ██    ██ ██  ██ ██ ██    ██    ██    ██ ██   ██      ██ 
--- ██      ██  ██████  ██   ████ ██    ██     ██████  ██   ██ ███████ 
+-- ███    ███  ██████  ███    ██ ██ ████████  ██████  ██████  ███████
+-- ████  ████ ██    ██ ████   ██ ██    ██    ██    ██ ██   ██ ██
+-- ██ ████ ██ ██    ██ ██ ██  ██ ██    ██    ██    ██ ██████  ███████
+-- ██  ██  ██ ██    ██ ██  ██ ██ ██    ██    ██    ██ ██   ██      ██
+-- ██      ██  ██████  ██   ████ ██    ██     ██████  ██   ██ ███████
 ------------------
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
 	output = "",
-	mode = "preferred",
+	mode = "1920x1080@60.00",
 	position = "auto",
 	scale = 1,
 })
@@ -38,15 +38,17 @@ local menu = "hyprlauncher"
 -------------------
 
 hl.on("hyprland.start", function()
-	hl.exec_cmd("waybar")
+	hl.exec_cmd("vesktop", { workspace = "2 silent", float = true, size = { 1503, 831 }, move = { 400, 234 } })
+	hl.exec_cmd("Telegram", { workspace = "2 silent", float = true, size = { 380, 504 }, move = { 12, 307 } })
+	hl.exec_cmd("kitty --hold /home/senku/.local/bin/prime", { workspace = "special:magic silent" })
+	hl.exec_cmd("zen-browser", { workspace = "1" })
 	hl.exec_cmd("blueman-applet")
 	hl.exec_cmd("nm-applet --indicator")
-	-- hl.exec_cmd("dunst")
 	hl.exec_cmd("wl-paste --type text --watch cliphist store")
 	hl.exec_cmd("wl-paste --type image --watch cliphist store")
 	hl.exec_cmd("awww-daemon")
-	hl.exec_cmd("bongocat -c ~/.config/bongocat/bongocat.conf")
 	hl.exec_cmd("quickshell")
+	hl.exec_cmd("sleep 10 && bongocat -c ~/.config/bongocat/bongocat.conf")
 	-- hl.exec_cmd("")
 	-- hl.exec_cmd("")
 	-- hl.exec_cmd("nm-applet")
@@ -88,7 +90,7 @@ hl.env("HYPRCURSOR_SIZE", "24")
 hl.config({
 	general = {
 		gaps_in = 2,
-		gaps_out = 5,
+		gaps_out = 0,
 
 		border_size = 1,
 
@@ -157,8 +159,8 @@ hl.animation({ leaf = "layersIn", enabled = true, speed = 4, bezier = "easeOutQu
 hl.animation({ leaf = "layersOut", enabled = true, speed = 1.5, bezier = "linear", style = "fade" })
 hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 1.79, bezier = "almostLinear" })
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 1.39, bezier = "almostLinear" })
-hl.animation({ leaf = "workspaces",    enabled = true, speed = 1.5, bezier = "almostLinear", style = "slidefadevert" })
-hl.animation({ leaf = "workspacesIn",  enabled = true, speed = 1.5, bezier = "almostLinear", style = "slidevert" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 1.5, bezier = "almostLinear", style = "slidefadevert" })
+hl.animation({ leaf = "workspacesIn", enabled = true, speed = 1.5, bezier = "almostLinear", style = "slidevert" })
 hl.animation({ leaf = "workspacesOut", enabled = true, speed = 1.5, bezier = "almostLinear", style = "slidevert" })
 hl.animation({ leaf = "zoomFactor", enabled = true, speed = 7, bezier = "quick" })
 
@@ -262,9 +264,11 @@ hl.bind(mainMod .. " + W", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle only
-hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("~/.local/bin/cliphist.sh c"))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("quickshell ipc call clipMenu toggle")) -- Clipboard
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("~/.local/bin/lock-pc.sh"))
 hl.bind("ALT + F", hl.dsp.window.fullscreen())
+
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("skwd wall toggle"))
 
 -- Screenshot
 hl.bind("PRINT", hl.dsp.exec_cmd("~/.local/bin/screenshot-util all")) -- all monitors
@@ -376,4 +380,12 @@ hl.window_rule({
 
 	move = "20 monitor_h-120",
 	float = true,
+})
+
+hl.window_rule({
+	name = "vesktop-workspace",
+	match = {
+		class = "^(vesktop)$",
+	},
+	workspace = "2",
 })
