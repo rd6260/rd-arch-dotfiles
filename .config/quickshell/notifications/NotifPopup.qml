@@ -66,6 +66,12 @@ Variants {
             target: CentralNotifServer
 
             function onNotification(notification) {
+                // Suppress popup display when Do Not Disturb is active
+                if (NotifHistoryService.dndEnabled) {
+                    NotifHistoryService.addNotification(notification);
+                    return;
+                }
+
                 let existingIndex = -1;
                 for (let i = 0; i < activeNotifications.count; i++) {
                     if (activeNotifications.get(i).notificationEntry.id === notification.id) {

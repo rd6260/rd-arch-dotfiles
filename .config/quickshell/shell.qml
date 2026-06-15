@@ -4,6 +4,7 @@ import QtQuick
 import "bar"
 import "notifications"
 import "utilities/clipboard"
+import "utilities/control-panel"
 
 /** Main shell entry point; manages surface orchestration. */
 ShellRoot {
@@ -43,5 +44,10 @@ ShellRoot {
     // Clipboard
     Clipboard {
         id: clipboardWindow
+    }
+
+    // Bottom-right corner control panel
+    ControlPanel {
+        id: controlPanel
     }
 }

@@ -16,6 +16,9 @@ QtObject {
     // --- State ---
     property bool panelOpen: false
 
+    /** When true, incoming notification popups are suppressed (Do Not Disturb). */
+    property bool dndEnabled: false
+
     // --- Storage ---
     /**
      * Flat list of all notifications received, newest first.

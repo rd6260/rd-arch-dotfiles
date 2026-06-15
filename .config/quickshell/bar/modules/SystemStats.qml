@@ -5,8 +5,10 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
 import qs.theme
-import Quickshell.Bluetooth
+// import Quickshell.Bluetooth
 import qs.notifications
+import Quickshell.Hyprland
+import Quickshell.Io
 
 /**
  * A unified system status indicator for Audio (Pipewire) and Power (UPower).
@@ -246,19 +248,49 @@ Rectangle {
                 text: {
                     if (!batteryModule.isVisible)
                         return "";
-                    if (batteryModule.isCharging && batteryModule.capacity < 100)
-                        return "";
+                    // charging capacity icons
+                    if (batteryModule.isCharging && batteryModule.capacity < 10)
+                        return "󰢜";
+                    if (batteryModule.isCharging && batteryModule.capacity < 20)
+                        return "󰂆";
+                    if (batteryModule.isCharging && batteryModule.capacity < 30)
+                        return "󰂇";
+                    if (batteryModule.isCharging && batteryModule.capacity < 40)
+                        return "󰂈";
+                    if (batteryModule.isCharging && batteryModule.capacity < 50)
+                        return "󰢝";
+                    if (batteryModule.isCharging && batteryModule.capacity < 60)
+                        return "󰂉";
+                    if (batteryModule.isCharging && batteryModule.capacity < 70)
+                        return "󰢞";
+                    if (batteryModule.isCharging && batteryModule.capacity < 80)
+                        return "󰂊";
+                    if (batteryModule.isCharging && batteryModule.capacity < 90)
+                        return "󰂋";
+                    if (batteryModule.isCharging && batteryModule.capacity <= 100)
+                        return "󰂅";
 
-                    if (batteryModule.capacity >= 90)
-                        return "󰂂";
-                    if (batteryModule.capacity >= 70)
-                        return "󰂀";
-                    if (batteryModule.capacity >= 50)
-                        return "󰁾";
-                    if (batteryModule.capacity >= 30)
-                        return "󰁼";
-                    if (batteryModule.capacity >= 10)
+                    // on battery capacity icons
+                    if (batteryModule.capacity < 10)
                         return "󰁺";
+                    if (batteryModule.capacity < 20)
+                        return "󰁻";
+                    if (batteryModule.capacity < 30)
+                        return "󰁼";
+                    if (batteryModule.capacity < 40)
+                        return "󰁽";
+                    if (batteryModule.capacity < 50)
+                        return "󰁾";
+                    if (batteryModule.capacity < 60)
+                        return "󰁿";
+                    if (batteryModule.capacity < 70)
+                        return "󰂀";
+                    if (batteryModule.capacity < 80)
+                        return "󰂁";
+                    if (batteryModule.capacity < 90)
+                        return "󰂂";
+                    if (batteryModule.capacity <= 100)
+                        return "󰁹";
                     return "󰂃";
                 }
             }
@@ -272,6 +304,22 @@ Rectangle {
                     pointSize: 10
                 }
                 text: Math.round(batteryModule.capacity) + "%"
+            }
+
+            HoverHandler {
+                id: batteryHover
+            }
+
+            TapHandler {
+                onTapped: {
+                    getProfileProc.running = true;
+                    var mapped = batteryModule.mapToItem(root.panelWindow.contentItem, 0, 0);
+                    powerProfileMenu.anchor.rect.x = mapped.x;
+                    powerProfileMenu.anchor.rect.y = mapped.y + batteryModule.height + 6;
+                    powerProfileMenu.visible = true;
+                    profileFocusGrab.active = true;
+                }
+                cursorShape: Qt.PointingHandCursor
             }
         }
 
@@ -297,10 +345,12 @@ Rectangle {
             Rectangle {
                 anchors.fill: parent
                 radius: parent.height / 2
-                color: notifBtnHover.containsMouse || notifHistoryBtn.isOpen
-                       ? Theme.primary_container
-                       : "transparent"
-                Behavior on color { ColorAnimation { duration: 180 } }
+                color: notifBtnHover.containsMouse || notifHistoryBtn.isOpen ? Theme.primary_container : "transparent"
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 180
+                    }
+                }
             }
 
             // Bell icon
@@ -311,10 +361,12 @@ Rectangle {
                     family: "JetBrainsMono Nerd Font"
                     pointSize: 12
                 }
-                color: notifHistoryBtn.isOpen
-                       ? Theme.on_primary_container
-                       : (notifHistoryBtn.hasNotifs ? Theme.primary : Theme.on_surface_variant)
-                Behavior on color { ColorAnimation { duration: 180 } }
+                color: notifHistoryBtn.isOpen ? Theme.on_primary_container : (notifHistoryBtn.hasNotifs ? Theme.primary : Theme.on_surface_variant)
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 180
+                    }
+                }
             }
 
             // Unread count badge
@@ -334,9 +386,7 @@ Rectangle {
                 Text {
                     id: badgeCount
                     anchors.centerIn: parent
-                    text: NotifHistoryService.allNotifications.length > 99
-                          ? "99+"
-                          : NotifHistoryService.allNotifications.length
+                    text: NotifHistoryService.allNotifications.length > 99 ? "99+" : NotifHistoryService.allNotifications.length
                     font {
                         family: "Google Sans Medium"
                         pixelSize: 8
@@ -353,6 +403,188 @@ Rectangle {
             TapHandler {
                 cursorShape: Qt.PointingHandCursor
                 onTapped: NotifHistoryService.panelOpen = !NotifHistoryService.panelOpen
+            }
+        }
+    }
+
+    PopupWindow {
+        id: powerProfileMenu
+        anchor.window: root.panelWindow
+        anchor.rect: Qt.rect(0, 0, 1, 1)
+
+        visible: false
+        color: "transparent"
+        implicitWidth: profileSurface.implicitWidth
+        implicitHeight: profileSurface.implicitHeight
+
+        property string activePowerProfile: ""
+
+        HyprlandFocusGrab {
+            id: profileFocusGrab
+            windows: [powerProfileMenu]
+            active: false
+            onCleared: {
+                powerProfileMenu.visible = false;
+                profileFocusGrab.active = false;
+            }
+        }
+
+        Rectangle {
+            id: profileSurface
+            implicitWidth: 160
+            implicitHeight: profileCol.implicitHeight + 12
+            color: Theme.surface_container_high
+            radius: 12
+            border.color: Theme.surface_container_highest
+            border.width: 1
+
+            opacity: powerProfileMenu.visible ? 1.0 : 0.0
+            scale: powerProfileMenu.visible ? 1.0 : 0.94
+            transformOrigin: Item.Top
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 120
+                    easing.type: Easing.OutQuad
+                }
+            }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.OutQuart
+                }
+            }
+
+            Column {
+                id: profileCol
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    topMargin: 6
+                    bottomMargin: 6
+                }
+                spacing: 0
+
+                Repeater {
+                    model: [
+                        {
+                            label: "Performance",
+                            icon: "󰓅",
+                            profile: "performance"
+                        },
+                        {
+                            label: "Balanced",
+                            icon: "󰗑",
+                            profile: "balanced"
+                        },
+                        {
+                            label: "Power Saver",
+                            icon: "󰌪",
+                            profile: "power-saver"
+                        }
+                    ]
+
+                    delegate: Item {
+                        width: profileCol.width
+                        height: 36
+
+                        readonly property bool isActive: modelData.profile === powerProfileMenu.activePowerProfile
+
+                        Rectangle {
+                            anchors {
+                                fill: parent
+                                leftMargin: 4
+                                rightMargin: 4
+                            }
+                            radius: 8
+                            color: isActive ? Theme.primary_container : Theme.primary
+                            opacity: isActive ? 1.0 : (profileHover.hovered ? 0.12 : 0)
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 80
+                                }
+                            }
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 120
+                                }
+                            }
+                        }
+
+                        Row {
+                            anchors {
+                                verticalCenter: parent.verticalCenter
+                                left: parent.left
+                                right: parent.right
+                                leftMargin: 14
+                                rightMargin: 14
+                            }
+                            spacing: 8
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.icon
+                                color: isActive ? Theme.on_primary_container : Theme.on_surface
+                                font {
+                                    family: "JetBrainsMono Nerd Font"
+                                    pixelSize: 14
+                                }
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: modelData.label
+                                color: isActive ? Theme.on_primary_container : Theme.on_surface
+                                font {
+                                    family: "Google Sans Medium"
+                                    pixelSize: 13
+                                }
+                            }
+                        }
+
+                        HoverHandler {
+                            id: profileHover
+                        }
+
+                        TapHandler {
+                            onTapped: {
+                                setProfileProc.targetProfile = modelData.profile;
+                                setProfileProc.running = true;
+                                powerProfileMenu.visible = false;
+                                profileFocusGrab.active = false;
+                            }
+                            cursorShape: Qt.PointingHandCursor
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Process {
+        id: getProfileProc
+        command: ["powerprofilesctl", "get"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var output = text.trim();
+                if (output !== "") {
+                    powerProfileMenu.activePowerProfile = output;
+                }
+            }
+        }
+    }
+
+    Process {
+        id: setProfileProc
+        property string targetProfile: ""
+        command: ["powerprofilesctl", "set", targetProfile]
+        running: false
+        onRunningChanged: {
+            if (!running && targetProfile !== "") {
+                powerProfileMenu.activePowerProfile = targetProfile;
             }
         }
     }
