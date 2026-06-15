@@ -11,16 +11,13 @@ import "../../notifications"
  * The control panel popup content.
  * Anchored to bottom-right inside ControlPanel.qml's PanelWindow.
  */
-Rectangle {
+Item {
     id: panelRoot
 
     // ── Geometry ────────────────────────────────────────────────────────────
-    width: 320
-    height: contentCol.implicitHeight + 24
-    radius: 20
-    color: Theme.surface_container_low
-    border.width: 1
-    border.color: Theme.outline_variant
+    // Expand to include the fillets (32px above, 32px left) for a fluid morphing curve
+    width: 320 + 32
+    height: contentCol.implicitHeight + 24 + 32
 
     // Accept keyboard focus for Escape key
     focus: true
@@ -214,21 +211,93 @@ Rectangle {
         }
     }
 
-    // ── Drop shadow ──────────────────────────────────────────────────────────
-    layer.enabled: true
-    layer.effect: DropShadow {
-        radius: 24
-        samples: 32
-        color: "#88000000"
-        verticalOffset: 8
-    }
+    // ── No Drop shadow for liquid aesthetic ──────────────────────────────────
 
     // ── Content ──────────────────────────────────────────────────────────────
-    Column {
-        id: contentCol
-        width: parent.width
-        anchors.top: parent.top
-        anchors.topMargin: 12
+    // The actual 320px panel container
+    Item {
+        id: panelBody
+        width: 320
+        height: contentCol.implicitHeight + 24
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+
+        // Base shape
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.surface_container_low
+            radius: 32 // organic corner radius
+
+            // Square corners touching the bottom and right edges
+            Rectangle {
+                width: 32; height: 32
+                anchors.top: parent.top
+                anchors.right: parent.right
+                color: Theme.surface_container_low
+            }
+            Rectangle {
+                width: 32; height: 32
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                color: Theme.surface_container_low
+            }
+            Rectangle {
+                width: 32; height: 32
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                color: Theme.surface_container_low
+            }
+        }
+
+        // Top-Right Fillet (above the panel, on the right edge)
+        Canvas {
+            width: 32; height: 32
+            anchors.bottom: parent.top
+            anchors.right: parent.right
+            property color fillColor: Theme.surface_container_low
+            onFillColorChanged: requestPaint()
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.reset();
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(32, 32);
+                ctx.lineTo(32, 0);
+                // Fluid bezier curve for surface-tension morphing effect
+                ctx.bezierCurveTo(32, 16, 16, 32, 0, 32);
+                ctx.lineTo(32, 32);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // Bottom-Left Fillet (to the left of the panel, on the bottom edge)
+        Canvas {
+            width: 32; height: 32
+            anchors.bottom: parent.bottom
+            anchors.right: parent.left
+            property color fillColor: Theme.surface_container_low
+            onFillColorChanged: requestPaint()
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.reset();
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(32, 32);
+                ctx.lineTo(0, 32);
+                // Fluid bezier curve for surface-tension morphing effect
+                ctx.bezierCurveTo(16, 32, 32, 16, 32, 0);
+                ctx.lineTo(32, 32);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        Column {
+            id: contentCol
+            width: parent.width
+            anchors.top: parent.top
+            anchors.topMargin: 12
 
         // ─── User Identity Section ───────────────────────────────────────────
         Item {
@@ -730,6 +799,7 @@ Rectangle {
 
         // Bottom padding
         Item { width: 1; height: 12 }
+    }
     }
 
     // ── Inline ToggleButton component ──────────────────────────────────────

@@ -3,6 +3,7 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
 import "."
+import "../../theme"
 
 /**
  * Bottom-right corner control panel.
@@ -36,8 +37,8 @@ Variants {
         anchors { bottom: true; right: true }
 
         // Closed → tiny 4×4 hot-zone. Open → sized to content + margins.
-        implicitWidth:  ControlPanelService.panelOpen ? panelUi.width  + 24 : 4
-        implicitHeight: ControlPanelService.panelOpen ? panelUi.height + 44 : 4
+        implicitWidth:  ControlPanelService.panelOpen ? panelUi.width  + Layout.sideBarWidth + 32 : 4
+        implicitHeight: ControlPanelService.panelOpen ? panelUi.height + Layout.bottomBarHeight + 32 : 4
 
         // ── Focus grab ────────────────────────────────────────────────────────
         // Bound directly to panelOpen so it activates/deactivates automatically,
@@ -73,25 +74,29 @@ Variants {
         ControlPanelUi {
             id: panelUi
 
-            // Pin to bottom-right with 12 px margin from the screen edge
+            // Pin to bottom-right flush with the screen bezel for liquid aesthetic
             anchors {
                 right:  parent.right
                 bottom: parent.bottom
-                rightMargin:  12
-                bottomMargin: 12
+                rightMargin:  Layout.sideBarWidth
+                bottomMargin: Layout.bottomBarHeight
             }
 
-            // Slide-up + fade when opening / closing
+            // "Liquid" scale-up from the corner
             opacity: ControlPanelService.panelOpen ? 1.0 : 0.0
             Behavior on opacity {
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { 
+                    duration: ControlPanelService.panelOpen ? 400 : 250
+                    easing.type: Easing.OutCubic 
+                }
             }
 
-            transform: Translate {
-                id: slideY
-                y: ControlPanelService.panelOpen ? 0 : 20
-                Behavior on y {
-                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+            transformOrigin: Item.BottomRight
+            scale: ControlPanelService.panelOpen ? 1.0 : 0.0
+            Behavior on scale {
+                NumberAnimation { 
+                    duration: ControlPanelService.panelOpen ? 500 : 300 
+                    easing.type: Easing.OutExpo 
                 }
             }
         }

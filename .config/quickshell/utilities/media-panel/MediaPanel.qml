@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import QtQuick
+import "../../theme"
 import "."
 
 /**
@@ -34,8 +35,8 @@ Variants {
         anchors { bottom: true; left: true }
 
         // Closed → tiny 4×4 hot-zone. Open → sized to content + margins.
-        implicitWidth:  MediaPanelService.panelOpen ? panelUi.width  + 24 : 4
-        implicitHeight: MediaPanelService.panelOpen ? panelUi.height + 44 : 4
+        implicitWidth:  MediaPanelService.panelOpen ? panelUi.width  + Layout.sideBarWidth + 32 : 4
+        implicitHeight: MediaPanelService.panelOpen ? panelUi.height + Layout.bottomBarHeight + 32 : 4
 
         // ── Focus grab ────────────────────────────────────────────────────────
         HyprlandFocusGrab {
@@ -68,25 +69,30 @@ Variants {
         MediaPanelUi {
             id: panelUi
 
-            // Pin to bottom-left with 12 px margin from the screen edge
+            // Pin to bottom-left exactly so it touches the bezels
             anchors {
                 left:  parent.left
                 bottom: parent.bottom
-                leftMargin:  12
-                bottomMargin: 12
+                leftMargin: Layout.sideBarWidth
+                bottomMargin: Layout.bottomBarHeight
             }
 
-            // Slide-up + fade when opening / closing
+            // "Liquid" scale-up from the corner
             opacity: MediaPanelService.panelOpen ? 1.0 : 0.0
             Behavior on opacity {
-                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { 
+                    duration: MediaPanelService.panelOpen ? 400 : 250
+                    easing.type: Easing.OutCubic 
+                }
             }
 
             transform: Translate {
-                id: slideY
-                y: MediaPanelService.panelOpen ? 0 : 20
+                y: MediaPanelService.panelOpen ? 0 : 100
                 Behavior on y {
-                    NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
+                    NumberAnimation { 
+                        duration: MediaPanelService.panelOpen ? 500 : 300 
+                        easing.type: Easing.OutExpo 
+                    }
                 }
             }
         }

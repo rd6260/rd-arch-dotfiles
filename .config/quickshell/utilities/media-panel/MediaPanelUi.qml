@@ -9,7 +9,7 @@ import "."
  * The media panel popup content.
  * Anchored to bottom-left inside MediaPanel.qml's PanelWindow.
  */
-Rectangle {
+Item {
     id: panelRoot
 
     // Accept keyboard focus for Escape key
@@ -19,39 +19,124 @@ Rectangle {
     }
 
     // ── Geometry ────────────────────────────────────────────────────────────
-    width: 380
-    height: 140
-    radius: 20
-    color: Theme.surface_container_low
-    border.width: 1
-    border.color: Theme.outline_variant
+    // Expand to include the fillets (32px above, 32px right) for a fluid morphing curve
+    width: 380 + 32
+    height: 140 + 32
 
-    // ── Drop shadow ──────────────────────────────────────────────────────────
-    layer.enabled: true
-    layer.effect: DropShadow {
-        radius: 24
-        samples: 32
-        color: "#88000000"
-        verticalOffset: 8
-    }
+    // No drop shadow for the liquid aesthetic, it must be completely flat with the bezel.
 
-    // We use a ListView to support multiple media players, allowing swiping
-    ListView {
-        id: playerList
-        anchors.fill: parent
-        orientation: ListView.Horizontal
-        snapMode: ListView.SnapOneItem
-        boundsBehavior: Flickable.StopAtBounds
-        clip: true
+    // The actual 380x140 panel container
+    Item {
+        id: panelBody
+        width: 380
+        height: 140
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
 
-        layer.enabled: true
-        layer.effect: OpacityMask {
-            maskSource: Rectangle {
-                width: playerList.width
-                height: playerList.height
-                radius: 20
+        // Base shape
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.surface
+            radius: 32 // Larger, more organic corner radius
+
+            // Square corners touching edges
+            Rectangle {
+                width: 32; height: 32
+                anchors.top: parent.top
+                anchors.left: parent.left
+                color: Theme.surface
+            }
+            Rectangle {
+                width: 32; height: 32
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                color: Theme.surface
+            }
+            Rectangle {
+                width: 32; height: 32
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                color: Theme.surface
             }
         }
+
+        // Top-Left Fillet (above the panel)
+        Canvas {
+            width: 32; height: 32
+            anchors.bottom: parent.top
+            anchors.left: parent.left
+            property color fillColor: Theme.surface
+            onFillColorChanged: requestPaint()
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.reset();
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(0, 32);
+                ctx.lineTo(0, 0);
+                // Fluid bezier curve for surface-tension morphing effect (Caelestia liquid style)
+                ctx.bezierCurveTo(0, 16, 16, 32, 32, 32);
+                ctx.lineTo(0, 32);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // Bottom-Right Fillet (to the right of the panel)
+        Canvas {
+            width: 32; height: 32
+            anchors.bottom: parent.bottom
+            anchors.left: parent.right
+            property color fillColor: Theme.surface
+            onFillColorChanged: requestPaint()
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.reset();
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.moveTo(0, 32);
+                ctx.lineTo(0, 0);
+                // Fluid bezier curve for surface-tension morphing effect (Caelestia liquid style)
+                ctx.bezierCurveTo(0, 16, 16, 32, 32, 32);
+                ctx.lineTo(0, 32);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // We use a ListView to support multiple media players, allowing swiping
+        ListView {
+            id: playerList
+            anchors.fill: parent
+            orientation: ListView.Horizontal
+            snapMode: ListView.SnapOneItem
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+
+            layer.enabled: true
+            layer.effect: OpacityMask {
+                maskSource: Rectangle {
+                    width: playerList.width
+                    height: playerList.height
+                    radius: 32
+                    
+                    Rectangle {
+                        width: 32; height: 32
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                    }
+                    Rectangle {
+                        width: 32; height: 32
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+                    }
+                    Rectangle {
+                        width: 32; height: 32
+                        anchors.bottom: parent.bottom
+                        anchors.right: parent.right
+                    }
+                }
+            }
 
         model: Mpris.players
 
@@ -63,30 +148,7 @@ Rectangle {
             required property var modelData
             property var player: modelData
 
-            // Dynamic background from Album Art (blurred)
-            Image {
-                id: bgArt
-                anchors.fill: parent
-                source: player.trackArtUrl || ""
-                fillMode: Image.PreserveAspectCrop
-                visible: false // Used as source for blur
-                asynchronous: true
-            }
-
-            FastBlur {
-                anchors.fill: parent
-                source: bgArt
-                radius: 64
-                visible: player.trackArtUrl !== undefined && String(player.trackArtUrl).trim() !== ""
-                opacity: 0.25 // Subtle tint behind the UI
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: Theme.surface_container_lowest
-                opacity: 0.6
-                radius: 20
-            }
+            // No dynamic background overlay; let the Theme.surface background from panelBody show through perfectly to match the bezel seamlessly.
 
             Item {
                 id: cardLayout
@@ -98,7 +160,7 @@ Rectangle {
                     id: artContainer
                     width: 100
                     height: 100
-                    radius: 16
+                    radius: 32 // More organic circular/squircle look
                     color: Theme.surface_container_highest
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
@@ -168,18 +230,22 @@ Rectangle {
                         spacing: 16
 
                         // Previous
-                        Rectangle {
+                        Item {
                             width: 36; height: 36
-                            radius: 18
-                            color: prevHover.containsMouse ? Theme.surface_container_highest : "transparent"
-                            Behavior on color { ColorAnimation { duration: 120 } }
                             anchors.verticalCenter: parent.verticalCenter
                             
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰒮" // skip-previous
-                                font { family: "JetBrainsMono Nerd Font"; pixelSize: 20 }
-                                color: Theme.on_surface
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 18
+                                color: prevHover.containsMouse ? Theme.surface_container_highest : "transparent"
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰒮" // skip-previous
+                                    font { family: "JetBrainsMono Nerd Font"; pixelSize: 20 }
+                                    color: Theme.on_surface
+                                }
                             }
                             
                             MouseArea {
@@ -192,28 +258,32 @@ Rectangle {
                         }
 
                         // Play/Pause
-                        Rectangle {
+                        Item {
                             width: 48; height: 48
-                            radius: 24
-                            color: Theme.primary_container
                             anchors.verticalCenter: parent.verticalCenter
                             
                             // Safe check for playing status (dbus/qml variants)
                             property bool isPlaying: !!player.isPlaying
 
-                            // Press/hover ripple
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 24
-                                color: playHover.containsMouse ? Qt.alpha(Theme.on_primary_container, 0.1) : "transparent"
-                                Behavior on color { ColorAnimation { duration: 100 } }
-                            }
+                                color: Theme.primary_container
 
-                            Text {
-                                anchors.centerIn: parent
-                                text: parent.isPlaying ? "󰏤" : "󰐊" // pause : play
-                                font { family: "JetBrainsMono Nerd Font"; pixelSize: 24 }
-                                color: Theme.on_primary_container
+                                // Hover overlay
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: 24
+                                    color: playHover.containsMouse ? Qt.alpha(Theme.on_primary_container, 0.1) : "transparent"
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: parent.parent.isPlaying ? "󰏤" : "󰐊" // pause : play
+                                    font { family: "JetBrainsMono Nerd Font"; pixelSize: 24 }
+                                    color: Theme.on_primary_container
+                                }
                             }
 
                             MouseArea {
@@ -226,18 +296,22 @@ Rectangle {
                         }
 
                         // Next
-                        Rectangle {
+                        Item {
                             width: 36; height: 36
-                            radius: 18
-                            color: nextHover.containsMouse ? Theme.surface_container_highest : "transparent"
-                            Behavior on color { ColorAnimation { duration: 120 } }
                             anchors.verticalCenter: parent.verticalCenter
                             
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰒭" // skip-next
-                                font { family: "JetBrainsMono Nerd Font"; pixelSize: 20 }
-                                color: Theme.on_surface
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 18
+                                color: nextHover.containsMouse ? Theme.surface_container_highest : "transparent"
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰒭" // skip-next
+                                    font { family: "JetBrainsMono Nerd Font"; pixelSize: 20 }
+                                    color: Theme.on_surface
+                                }
                             }
                             
                             MouseArea {
@@ -296,6 +370,7 @@ Rectangle {
                 font { family: "Google Sans Medium"; pixelSize: 16 }
                 color: Theme.on_surface_variant
             }
-        }
-    }
-}
+        } // Closes Column
+    } // Closes Empty State Item
+} // Closes panelBody
+} // Closes panelRoot
