@@ -138,6 +138,13 @@ Rectangle {
         }
     }
 
+    Process {
+        id: btRadioCmd
+        property bool targetState: true
+        command: ["bash", "-c", targetState ? "bluetoothctl power on" : "bluetoothctl power off"]
+        running: false
+    }
+
     // Check initial wifi state on startup
     Process {
         id: wifiStateCheck
@@ -347,10 +354,8 @@ Rectangle {
                     active: panelRoot.btEnabled
                     cellWidth: toggleGrid.cellW
                     onToggled: {
-                        if (panelRoot.btEnabled)
-                            BluetoothManager.state = BluetoothState.Off;
-                        else
-                            BluetoothManager.state = BluetoothState.On;
+                        btRadioCmd.targetState = !panelRoot.btEnabled;
+                        btRadioCmd.running = true;
                     }
                 }
 

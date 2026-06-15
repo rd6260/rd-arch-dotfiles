@@ -356,12 +356,12 @@ Rectangle {
             // Bell icon
             Text {
                 anchors.centerIn: parent
-                text: notifHistoryBtn.isOpen ? "󰂚" : (notifHistoryBtn.hasNotifs ? "󰂚" : "󰂛")
+                text: NotifHistoryService.dndEnabled ? "󰂛" : (notifHistoryBtn.isOpen || notifHistoryBtn.hasNotifs ? "󰂚" : "󰂜")
                 font {
                     family: "JetBrainsMono Nerd Font"
                     pointSize: 12
                 }
-                color: notifHistoryBtn.isOpen ? Theme.on_primary_container : (notifHistoryBtn.hasNotifs ? Theme.primary : Theme.on_surface_variant)
+                color: notifHistoryBtn.isOpen ? Theme.on_primary_container : (NotifHistoryService.dndEnabled ? Theme.on_surface_variant : (notifHistoryBtn.hasNotifs ? Theme.primary : Theme.on_surface_variant))
                 Behavior on color {
                     ColorAnimation {
                         duration: 180
@@ -371,7 +371,7 @@ Rectangle {
 
             // Unread count badge
             Rectangle {
-                visible: notifHistoryBtn.hasNotifs && !notifHistoryBtn.isOpen
+                visible: notifHistoryBtn.hasNotifs && !notifHistoryBtn.isOpen && !NotifHistoryService.dndEnabled
                 anchors {
                     top: parent.top
                     right: parent.right

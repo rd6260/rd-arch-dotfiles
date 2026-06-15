@@ -327,7 +327,7 @@ Variants {
 
                                 Text {
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    text: "󰂛"
+                                    text: "󰂜"
                                     font { family: "JetBrainsMono Nerd Font"; pointSize: 40 }
                                     color: Theme.outline_variant
                                 }
