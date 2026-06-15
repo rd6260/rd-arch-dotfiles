@@ -5,6 +5,7 @@ import "bar"
 import "notifications"
 import "utilities/clipboard"
 import "utilities/control-panel"
+import "utilities/media-panel"
 
 /** Main shell entry point; manages surface orchestration. */
 ShellRoot {
@@ -49,5 +50,10 @@ ShellRoot {
     // Bottom-right corner control panel
     ControlPanel {
         id: controlPanel
+    }
+
+    // Bottom-left corner media panel
+    MediaPanel {
+        id: mediaPanel
     }
 }
