@@ -44,6 +44,15 @@ Rectangle {
         boundsBehavior: Flickable.StopAtBounds
         clip: true
 
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            maskSource: Rectangle {
+                width: playerList.width
+                height: playerList.height
+                radius: 20
+            }
+        }
+
         model: Mpris.players
 
         delegate: Item {
