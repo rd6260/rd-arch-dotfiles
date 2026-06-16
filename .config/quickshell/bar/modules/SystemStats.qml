@@ -9,6 +9,7 @@ import qs.theme
 import qs.notifications
 import Quickshell.Hyprland
 import Quickshell.Io
+import "../../utilities/control-panel"
 
 /**
  * A unified system status indicator for Audio (Pipewire) and Power (UPower).
@@ -326,6 +327,73 @@ Rectangle {
             height: 16
             color: Theme.outline_variant
             anchors.verticalCenter: parent.verticalCenter
+        }
+
+        // --- Screen Record Indicator ---
+        Item {
+            id: screenRecIndicator
+            visible: ControlPanelService.screenRecordingActive
+            width: visible ? recRow.implicitWidth + 16 : 0
+            height: 28
+            anchors.verticalCenter: parent.verticalCenter
+            clip: true
+
+            Behavior on width {
+                NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.height / 2
+                color: Theme.critical
+                opacity: 0.15
+            }
+
+            Row {
+                id: recRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                // Blinking Dot
+                Rectangle {
+                    width: 8; height: 8
+                    radius: 4
+                    color: Theme.critical
+                    anchors.verticalCenter: parent.verticalCenter
+                    
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite
+                        running: screenRecIndicator.visible && !ControlPanelService.screenRecordingPaused
+                        NumberAnimation { to: 0.2; duration: 800; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                    }
+                    opacity: ControlPanelService.screenRecordingPaused ? 0.4 : 1.0
+                }
+
+                // Elapsed Time
+                Text {
+                    text: ControlPanelService.screenRecordingElapsedText
+                    font {
+                        family: "Google Sans Medium"
+                        pointSize: 10
+                    }
+                    color: Theme.critical
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            HoverHandler {
+                id: recHover
+            }
+
+            TapHandler {
+                onTapped: {
+                    if (root.panelWindow) {
+                        ControlPanelService.panelOpen = true;
+                    }
+                }
+                cursorShape: Qt.PointingHandCursor
+            }
         }
 
         // --- Notification History Button ---

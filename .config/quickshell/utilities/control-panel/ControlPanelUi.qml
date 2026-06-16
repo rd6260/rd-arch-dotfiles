@@ -222,6 +222,8 @@ Item {
         anchors.bottom: parent.bottom
         anchors.right: parent.right
 
+        Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.OutExpo } }
+
         // Base shape
         Rectangle {
             anchors.fill: parent
@@ -298,6 +300,8 @@ Item {
             width: parent.width
             anchors.top: parent.top
             anchors.topMargin: 12
+
+            move: Transition { NumberAnimation { properties: "y"; duration: 300; easing.type: Easing.OutExpo } }
 
         // ─── User Identity Section ───────────────────────────────────────────
         Item {
@@ -378,6 +382,124 @@ Item {
                     text: "@" + ControlPanelService.hostname
                     color: Theme.on_surface_variant
                     font { family: "Google Sans"; pixelSize: 12 }
+                }
+            }
+        }
+
+        // ─── Active Recording Bar ─────────────────────────────────────────────
+        Item {
+            width: parent.width
+            height: ControlPanelService.screenRecordingActive ? 64 : 0
+
+            Item {
+                width: parent.width
+                height: parent.height
+                clip: activeRecAnim.running
+                visible: height > 0
+                Behavior on height { NumberAnimation { id: activeRecAnim; duration: 300; easing.type: Easing.OutExpo } }
+
+                Item {
+                    width: parent.width
+                    height: 64
+
+            Rectangle {
+                anchors {
+                    fill: parent
+                    leftMargin: 16
+                    rightMargin: 16
+                    topMargin: 4
+                    bottomMargin: 4
+                }
+                radius: 16
+                color: Theme.critical
+                opacity: 0.15
+            }
+
+            Row {
+                anchors {
+                    left: parent.left
+                    leftMargin: 32
+                    verticalCenter: parent.verticalCenter
+                }
+                spacing: 12
+
+                // Blinking Dot
+                Rectangle {
+                    width: 10; height: 10
+                    radius: 5
+                    color: Theme.critical
+                    anchors.verticalCenter: parent.verticalCenter
+                    
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite
+                        running: ControlPanelService.screenRecordingActive && !ControlPanelService.screenRecordingPaused && panelRoot.scale === 1.0
+                        NumberAnimation { to: 0.2; duration: 800; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                    }
+                    opacity: ControlPanelService.screenRecordingPaused ? 0.4 : 1.0
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    Text {
+                        text: ControlPanelService.screenRecordingPaused ? "Paused" : "Recording Screen"
+                        color: Theme.on_surface
+                        font { family: "Google Sans Medium"; pixelSize: 13 }
+                    }
+                    Text {
+                        text: ControlPanelService.screenRecordingElapsedText
+                        color: Theme.critical
+                        font { family: "Google Sans Medium"; pixelSize: 11; bold: true }
+                    }
+                }
+            }
+
+            Row {
+                anchors {
+                    right: parent.right
+                    rightMargin: 24
+                    verticalCenter: parent.verticalCenter
+                }
+                spacing: 8
+
+                // Pause/Resume Button
+                Rectangle {
+                    width: 36; height: 36
+                    radius: 18
+                    color: pauseHover.hovered ? Theme.surface_container_highest : "transparent"
+                    
+                    Text {
+                        anchors.centerIn: parent
+                        text: ControlPanelService.screenRecordingPaused ? "󰐊" : "󰏤"
+                        font { family: "JetBrainsMono Nerd Font"; pixelSize: 16 }
+                        color: Theme.on_surface
+                    }
+                    HoverHandler { id: pauseHover }
+                    TapHandler {
+                        onTapped: ControlPanelService.pauseResumeRecording()
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                }
+
+                // Stop/Done Button
+                Rectangle {
+                    width: 36; height: 36
+                    radius: 18
+                    color: stopHover.hovered ? Theme.surface_container_highest : "transparent"
+                    
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰓛"
+                        font { family: "JetBrainsMono Nerd Font"; pixelSize: 16 }
+                        color: Theme.critical
+                    }
+                    HoverHandler { id: stopHover }
+                    TapHandler {
+                        onTapped: ControlPanelService.toggleScreenRecording()
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                }
+            }
                 }
             }
         }
@@ -514,6 +636,15 @@ Item {
                         nightLightCmd.running = true;
                     }
                 }
+
+                // ── Screen Record ──
+                ToggleButton {
+                    icon: ControlPanelService.screenRecordingActive ? "󰻃" : "󰻂"
+                    label: ControlPanelService.screenRecordingActive ? "Recording" : "Record"
+                    active: ControlPanelService.screenRecordingActive
+                    cellWidth: toggleGrid.cellW
+                    onToggled: ControlPanelService.toggleScreenRecording()
+                }
             }
         }
 
@@ -524,6 +655,8 @@ Item {
             topPadding: 4
             bottomPadding: 8
             spacing: 2
+            
+            move: Transition { NumberAnimation { properties: "y"; duration: 300; easing.type: Easing.OutExpo } }
 
             // ── Volume slider ──
             SliderRow {
@@ -571,9 +704,17 @@ Item {
             Item {
                 width: parent.width
                 height: ControlPanelService.nightLightEnabled ? 40 : 0
-                visible: height > 0
-                clip: true
-                Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                Item {
+                    width: parent.width
+                    height: parent.height
+                    clip: nlAnim.running
+                    visible: height > 0
+                    Behavior on height { NumberAnimation { id: nlAnim; duration: 300; easing.type: Easing.OutExpo } }
+
+                    Item {
+                        width: parent.width
+                        height: 40
 
                 SliderRow {
                     icon: "󰖔"
@@ -591,6 +732,8 @@ Item {
                         nightLightDebounce.restart();
                     }
                 }
+                    }
+                }
             }
         }
 
@@ -599,11 +742,13 @@ Item {
             id: wifiExpandItem
             width: parent.width
             height: panelRoot.expandedSection === "wifi" ? wifiInner.implicitHeight + 8 : 0
-            clip: true
 
-            Behavior on height {
-                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-            }
+            Item {
+                width: parent.width
+                height: parent.height
+                clip: wifiAnim.running
+                visible: height > 0
+                Behavior on height { NumberAnimation { id: wifiAnim; duration: 300; easing.type: Easing.OutExpo } }
 
             Column {
                 id: wifiInner
@@ -689,6 +834,7 @@ Item {
                     }
                 }
             }
+            }
         }
 
         // ─── Speaker Device List ─────────────────────────────────────────────
@@ -696,11 +842,13 @@ Item {
             width: parent.width
             // implicitHeight of speakerColumn (a Column) is reliably the sum of its children
             height: panelRoot.expandedSection === "speaker" ? speakerColumn.implicitHeight + 8 : 0
-            clip: true
 
-            Behavior on height {
-                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-            }
+            Item {
+                width: parent.width
+                height: parent.height
+                clip: speakerAnim.running
+                visible: height > 0
+                Behavior on height { NumberAnimation { id: speakerAnim; duration: 300; easing.type: Easing.OutExpo } }
 
             Column {
                 id: speakerColumn
@@ -743,17 +891,20 @@ Item {
                     }
                 }
             }
+            }
         }
 
         // ─── Mic Device List ─────────────────────────────────────────────────
         Item {
             width: parent.width
             height: panelRoot.expandedSection === "mic" ? micColumn.implicitHeight + 8 : 0
-            clip: true
 
-            Behavior on height {
-                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-            }
+            Item {
+                width: parent.width
+                height: parent.height
+                clip: micAnim.running
+                visible: height > 0
+                Behavior on height { NumberAnimation { id: micAnim; duration: 300; easing.type: Easing.OutExpo } }
 
             Column {
                 id: micColumn
@@ -794,6 +945,7 @@ Item {
                         }
                     }
                 }
+            }
             }
         }
 

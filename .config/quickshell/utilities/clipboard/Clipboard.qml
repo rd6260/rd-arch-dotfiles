@@ -38,9 +38,13 @@ Variants {
         anchors { bottom: true }
 
         // Static sizing to prevent Hyprland 0x0 centering bugs.
-        // Input passes through because Quickshell dynamically masks transparent items.
+        // We use an explicit mask so the visually clipped area doesn't swallow clicks.
         implicitWidth:  panelUi.width
         implicitHeight: panelUi.height + Layout.bottomBarHeight
+
+        mask: Region {
+            item: clipItem
+        }
 
         // ── Focus grab ────────────────────────────────────────────────────────
         HyprlandFocusGrab {
@@ -72,17 +76,21 @@ Variants {
             }
         }
 
-        ClipboardUi {
-            id: panelUi
+        Item {
+            id: clipItem
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: Layout.bottomBarHeight
             
-            transformOrigin: Item.Bottom
-            scale: panelWindow.clipProgress
-            // Apply a slight opacity fade to smooth the very beginning of the spring
-            opacity: panelWindow.clipProgress > 0 ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: 100 } }
+            width: panelUi.width
+            height: panelUi.height * panelWindow.clipProgress
+            clip: true
+
+            ClipboardUi {
+                id: panelUi
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
         }
     }
 }

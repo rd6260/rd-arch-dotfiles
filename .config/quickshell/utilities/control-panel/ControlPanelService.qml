@@ -39,4 +39,75 @@ QtObject {
             onStreamFinished: root.hostname = text.trim()
         }
     }
+
+    // --- Screen Recording ---
+    property bool screenRecordingActive: false
+    property bool screenRecordingPaused: false
+    property int screenRecordingElapsedSeconds: 0
+    property string screenRecordingElapsedText: "00:00"
+
+    property var _screenRecordTimer: Timer {
+        id: screenRecordTimer
+        interval: 1000
+        repeat: true
+        running: root.screenRecordingActive && !root.screenRecordingPaused
+        onTriggered: {
+            root.screenRecordingElapsedSeconds += 1;
+            let m = Math.floor(root.screenRecordingElapsedSeconds / 60);
+            let s = root.screenRecordingElapsedSeconds % 60;
+            root.screenRecordingElapsedText = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+        }
+    }
+
+    property var _setupRecDir: Process {
+        command: ["bash", "-c", "mkdir -p $HOME/Videos/screen-recording"]
+        running: false
+        onRunningChanged: {
+            if (!running && _startRecFlag) {
+                root.screenRecordingElapsedSeconds = 0;
+                root.screenRecordingElapsedText = "00:00";
+                root.screenRecordingPaused = false;
+                _screenRecordProc.running = true;
+                _startRecFlag = false;
+            }
+        }
+    }
+
+    property bool _startRecFlag: false
+
+    property var _screenRecordProc: Process {
+        id: screenRecordProc
+        property string commandLine: "gpu-screen-recorder -w screen -f 60 -a default_output -o \"$HOME/Videos/screen-recording/sr_$(date +%Y%m%d_%H%M%S).mp4\""
+        command: ["bash", "-c", commandLine]
+        running: false
+        onRunningChanged: {
+            root.screenRecordingActive = running;
+            if (!running) {
+                root.screenRecordingPaused = false;
+                root.screenRecordingElapsedSeconds = 0;
+                root.screenRecordingElapsedText = "00:00";
+            }
+        }
+    }
+
+    function toggleScreenRecording() {
+        if (screenRecordingActive) {
+            _screenRecordProc.running = false;
+        } else {
+            _startRecFlag = true;
+            _setupRecDir.running = true;
+        }
+    }
+
+    property var _pauseProc: Process {
+        command: ["killall", "-SIGUSR2", "gpu-screen-recorder"]
+        running: false
+    }
+
+    function pauseResumeRecording() {
+        if (screenRecordingActive) {
+            _pauseProc.running = true;
+            screenRecordingPaused = !screenRecordingPaused;
+        }
+    }
 }
