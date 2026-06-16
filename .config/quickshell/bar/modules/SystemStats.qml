@@ -96,15 +96,6 @@ Rectangle {
                                 sourceSize: Qt.size(14, 14)
                             }
 
-                            QsMenuAnchor {
-                                id: menuAnchor
-                                menu: modelData.menu
-                                anchor.window: root.panelWindow
-                                anchor.item: trayItemRect
-                                anchor.edges: Edges.Bottom
-                                anchor.gravity: Edges.Bottom
-                            }
-
                             HoverHandler {
                                 id: trayItemHover
                             }
@@ -116,7 +107,8 @@ Rectangle {
                                         modelData.activate();
                                     } else if (button === Qt.RightButton) {
                                         if (modelData.hasMenu) {
-                                            menuAnchor.open();
+                                            customTrayMenu.trayItem = modelData;
+                                            customTrayMenu.openFor(trayItemRect);
                                         } else {
                                             modelData.secondaryActivate();
                                         }
@@ -127,6 +119,11 @@ Rectangle {
                         }
                     }
                 }
+            }
+
+            TrayMenu {
+                id: customTrayMenu
+                parentWindow: root.panelWindow
             }
 
             // Toggle Arrow

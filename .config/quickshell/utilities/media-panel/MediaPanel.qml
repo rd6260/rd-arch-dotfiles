@@ -66,35 +66,40 @@ Variants {
         }
 
         // ── Panel content ─────────────────────────────────────────────────────
+        // Spring bezier matches caelestia expressiveDefaultSpatial.
+        // wasOpen tracks direction: false=opening (spring), true=closing (fast).
+        property real clipProgress: 0.0
+        property bool wasOpen: false
+
+        Behavior on clipProgress {
+            NumberAnimation {
+                duration: panelWindow.wasOpen ? 200 : 500
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: panelWindow.wasOpen
+                    ? [0.3,  0.0,  0.8,  0.15, 1.0, 1.0]
+                    : [0.38, 1.21, 0.22, 1.0,  1.0, 1.0]
+            }
+        }
+
+        Connections {
+            target: MediaPanelService
+            function onPanelOpenChanged() {
+                panelWindow.wasOpen = !MediaPanelService.panelOpen
+                panelWindow.clipProgress = MediaPanelService.panelOpen ? 1.0 : 0.0
+            }
+        }
+
         MediaPanelUi {
             id: panelUi
-
-            // Pin to bottom-left exactly so it touches the bezels
-            anchors {
-                left:  parent.left
-                bottom: parent.bottom
-                leftMargin: Layout.sideBarWidth
-                bottomMargin: Layout.bottomBarHeight
-            }
-
-            // "Liquid" scale-up from the corner
-            opacity: MediaPanelService.panelOpen ? 1.0 : 0.0
-            Behavior on opacity {
-                NumberAnimation { 
-                    duration: MediaPanelService.panelOpen ? 400 : 250
-                    easing.type: Easing.OutCubic 
-                }
-            }
-
-            transform: Translate {
-                y: MediaPanelService.panelOpen ? 0 : 100
-                Behavior on y {
-                    NumberAnimation { 
-                        duration: MediaPanelService.panelOpen ? 500 : 300 
-                        easing.type: Easing.OutExpo 
-                    }
-                }
-            }
+            anchors.bottom: parent.bottom
+            anchors.left:   parent.left
+            anchors.leftMargin:   Layout.sideBarWidth
+            anchors.bottomMargin: Layout.bottomBarHeight
+            
+            transformOrigin: Item.BottomLeft
+            scale: panelWindow.clipProgress
+            opacity: panelWindow.clipProgress > 0 ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 100 } }
         }
     }
 }

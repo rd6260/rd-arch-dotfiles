@@ -71,34 +71,40 @@ Variants {
         }
 
         // ── Panel content ─────────────────────────────────────────────────────
+        property real clipProgress: 0.0
+        property bool wasOpen: false
+
+        Behavior on clipProgress {
+            NumberAnimation {
+                duration: panelWindow.wasOpen ? 200 : 500
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: panelWindow.wasOpen
+                    ? [0.3,  0.0,  0.8,  0.15, 1.0, 1.0]
+                    : [0.38, 1.21, 0.22, 1.0,  1.0, 1.0]
+            }
+        }
+
+        Connections {
+            target: ControlPanelService
+            function onPanelOpenChanged() {
+                panelWindow.wasOpen = !ControlPanelService.panelOpen
+                panelWindow.clipProgress = ControlPanelService.panelOpen ? 1.0 : 0.0
+            }
+        }
+
         ControlPanelUi {
             id: panelUi
-
-            // Pin to bottom-right flush with the screen bezel for liquid aesthetic
-            anchors {
-                right:  parent.right
-                bottom: parent.bottom
-                rightMargin:  Layout.sideBarWidth
-                bottomMargin: Layout.bottomBarHeight
-            }
-
-            // "Liquid" scale-up from the corner
-            opacity: ControlPanelService.panelOpen ? 1.0 : 0.0
-            Behavior on opacity {
-                NumberAnimation { 
-                    duration: ControlPanelService.panelOpen ? 400 : 250
-                    easing.type: Easing.OutCubic 
-                }
-            }
-
+            anchors.bottom: parent.bottom
+            anchors.right:  parent.right
+            anchors.rightMargin:  Layout.sideBarWidth
+            anchors.bottomMargin: Layout.bottomBarHeight
+            
             transformOrigin: Item.BottomRight
-            scale: ControlPanelService.panelOpen ? 1.0 : 0.0
-            Behavior on scale {
-                NumberAnimation { 
-                    duration: ControlPanelService.panelOpen ? 500 : 300 
-                    easing.type: Easing.OutExpo 
-                }
-            }
+            scale: panelWindow.clipProgress
+            // Apply a slight opacity fade to smooth the very beginning of the spring, but 
+            // the main morphing effect is the scale spring.
+            opacity: panelWindow.clipProgress > 0 ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 100 } }
         }
     }
 }
