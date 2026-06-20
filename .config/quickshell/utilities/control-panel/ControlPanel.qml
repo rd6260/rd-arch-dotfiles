@@ -51,14 +51,14 @@ Variants {
         }
 
         // ── Hot-zone ──────────────────────────────────────────────────────────
-        // Only active when the panel is closed (window is 4×4).
         HoverHandler {
-            enabled: !ControlPanelService.panelOpen
             onHoveredChanged: {
-                if (hovered) {
+                if (hovered && !ControlPanelService.panelOpen) {
                     ControlPanelService.panelOpen = true;
                     // Slight delay so the window has time to resize before grabbing focus
                     focusTimer.start();
+                } else if (!hovered && ControlPanelService.panelOpen) {
+                    ControlPanelService.panelOpen = false;
                 }
             }
         }

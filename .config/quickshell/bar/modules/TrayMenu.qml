@@ -76,20 +76,20 @@ PopupWindow {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CLIP CONTAINER
-    // clip:true with height driven by clipProgress.
-    // Content (fillets + body) sits at y=0 INSIDE the clip.
-    // As clipProgress goes 0→1 the clip grows downward revealing top-first:
-    //   frame 1 → fillets visible at bar edge
-    //   frames 2-N → body reveals below fillets
-    // The spring bezier (y=1.21 overshoot) makes the clip briefly grow past
-    // the body then snap back — the caelestia "liquid" snap feel.
+    // SCALE CONTAINER
+    // Scales from the top edge, driven by clipProgress.
+    // The spring bezier (y=1.21 overshoot) makes the menu briefly grow past
+    // 100% scale then snap back — creating an organic liquid expansion effect.
     // ─────────────────────────────────────────────────────────────────────────
     Item {
         id: clipItem
         width: 284
-        height: menuBodyRect.height * menuPopup.clipProgress
-        clip: true
+        height: menuBodyRect.height
+
+        transformOrigin: Item.Top
+        scale: menuPopup.clipProgress
+        opacity: menuPopup.clipProgress > 0 ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 100 } }
 
         // ── FILLETS ──────────────────────────────────────────────────────────
         // Pinned at y=0 (top of clip = bar bottom edge). They are the FIRST

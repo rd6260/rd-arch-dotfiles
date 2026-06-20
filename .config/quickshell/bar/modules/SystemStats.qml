@@ -312,10 +312,14 @@ Rectangle {
                 onTapped: {
                     getProfileProc.running = true;
                     var mapped = batteryModule.mapToItem(root.panelWindow.contentItem, 0, 0);
-                    powerProfileMenu.anchor.rect.x = mapped.x;
-                    powerProfileMenu.anchor.rect.y = mapped.y + batteryModule.height + 6;
+                    var centerX = mapped.x + (batteryModule.width / 2);
+                    powerProfileMenu.anchor.rect = Qt.rect(centerX - 112, Layout.topBarHeight, 224, 1);
+                    
+                    powerProfileMenu.clipProgress = 0.0;
                     powerProfileMenu.visible = true;
                     profileFocusGrab.active = true;
+                    powerProfileMenu.isOpening = true;
+                    powerProfileMenu.clipProgress = 1.0;
                 }
                 cursorShape: Qt.PointingHandCursor
             }
@@ -479,49 +483,105 @@ Rectangle {
 
         visible: false
         color: "transparent"
-        implicitWidth: profileSurface.implicitWidth
+        implicitWidth: 224
         implicitHeight: profileSurface.implicitHeight
 
         property string activePowerProfile: ""
+        property bool isOpening: false
+        property real clipProgress: 0.0
+
+        Behavior on clipProgress {
+            NumberAnimation {
+                duration: powerProfileMenu.isOpening ? 500 : 200
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: powerProfileMenu.isOpening
+                    ? [0.38, 1.21, 0.22, 1.0,  1.0, 1.0]
+                    : [0.3,  0.0,  0.8,  0.15, 1.0, 1.0]
+            }
+        }
 
         HyprlandFocusGrab {
             id: profileFocusGrab
             windows: [powerProfileMenu]
             active: false
             onCleared: {
-                powerProfileMenu.visible = false;
+                powerProfileMenu.isOpening = false;
+                powerProfileMenu.clipProgress = 0.0;
                 profileFocusGrab.active = false;
+                closeTimer.start();
             }
         }
 
-        Rectangle {
-            id: profileSurface
-            implicitWidth: 160
-            implicitHeight: profileCol.implicitHeight + 12
-            color: Theme.surface_container_high
-            radius: 12
-            border.color: Theme.surface_container_highest
-            border.width: 1
+        Timer {
+            id: closeTimer
+            interval: 220
+            repeat: false
+            onTriggered: powerProfileMenu.visible = false
+        }
 
-            opacity: powerProfileMenu.visible ? 1.0 : 0.0
-            scale: powerProfileMenu.visible ? 1.0 : 0.94
+        Item {
+            id: clipItem
+            width: 224
+            height: profileSurface.implicitHeight
+
             transformOrigin: Item.Top
+            scale: powerProfileMenu.clipProgress
+            opacity: powerProfileMenu.clipProgress > 0 ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 100 } }
 
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 120
-                    easing.type: Easing.OutQuad
+            Canvas {
+                id: leftFillet
+                width: 32; height: 32
+                x: 0; y: 0
+                property color c: Theme.surface
+                onCChanged: requestPaint()
+                Component.onCompleted: requestPaint()
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.reset()
+                    ctx.fillStyle = c
+                    ctx.beginPath()
+                    ctx.moveTo(width, 0)
+                    ctx.lineTo(width, height)
+                    ctx.bezierCurveTo(width, height * 0.5, width * 0.5, 0, 0, 0)
+                    ctx.closePath()
+                    ctx.fill()
                 }
             }
-            Behavior on scale {
-                NumberAnimation {
-                    duration: 150
-                    easing.type: Easing.OutQuart
+
+            Canvas {
+                id: rightFillet
+                width: 32; height: 32
+                x: 192; y: 0
+                property color c: Theme.surface
+                onCChanged: requestPaint()
+                Component.onCompleted: requestPaint()
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.reset()
+                    ctx.fillStyle = c
+                    ctx.beginPath()
+                    ctx.moveTo(0, 0)
+                    ctx.lineTo(0, height)
+                    ctx.bezierCurveTo(0, height * 0.5, width * 0.5, 0, width, 0)
+                    ctx.closePath()
+                    ctx.fill()
                 }
             }
 
-            Column {
-                id: profileCol
+            Rectangle {
+                id: profileSurface
+                x: 32; y: 0
+                implicitWidth: 160
+                implicitHeight: profileCol.implicitHeight + 12
+                color: Theme.surface
+                radius: 16
+
+                Rectangle { width: 16; height: 16; anchors.top: parent.top; anchors.left: parent.left; color: Theme.surface }
+                Rectangle { width: 16; height: 16; anchors.top: parent.top; anchors.right: parent.right; color: Theme.surface }
+
+                Column {
+                    id: profileCol
                 anchors {
                     top: parent.top
                     left: parent.left
@@ -617,8 +677,10 @@ Rectangle {
                             onTapped: {
                                 setProfileProc.targetProfile = modelData.profile;
                                 setProfileProc.running = true;
-                                powerProfileMenu.visible = false;
+                                powerProfileMenu.isOpening = false;
+                                powerProfileMenu.clipProgress = 0.0;
                                 profileFocusGrab.active = false;
+                                closeTimer.start();
                             }
                             cursorShape: Qt.PointingHandCursor
                         }
@@ -626,6 +688,7 @@ Rectangle {
                 }
             }
         }
+    }
     }
 
     Process {

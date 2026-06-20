@@ -43,7 +43,7 @@ Variants {
         implicitHeight: panelUi.height + Layout.bottomBarHeight
 
         mask: Region {
-            item: clipItem
+            item: panelUi
         }
 
         // ── Focus grab ────────────────────────────────────────────────────────
@@ -76,21 +76,16 @@ Variants {
             }
         }
 
-        Item {
-            id: clipItem
+        ClipboardUi {
+            id: panelUi
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: Layout.bottomBarHeight
             
-            width: panelUi.width
-            height: panelUi.height * panelWindow.clipProgress
-            clip: true
-
-            ClipboardUi {
-                id: panelUi
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
+            transformOrigin: Item.Bottom
+            scale: panelWindow.clipProgress
+            opacity: panelWindow.clipProgress > 0 ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 100 } }
         }
     }
 }

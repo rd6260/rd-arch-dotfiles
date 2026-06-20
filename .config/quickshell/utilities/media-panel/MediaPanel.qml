@@ -48,12 +48,13 @@ Variants {
 
         // ── Hot-zone ──────────────────────────────────────────────────────────
         HoverHandler {
-            enabled: !MediaPanelService.panelOpen
             onHoveredChanged: {
-                if (hovered) {
+                if (hovered && !MediaPanelService.panelOpen) {
                     MediaPanelService.panelOpen = true;
                     // Slight delay so the window has time to resize before grabbing focus
                     focusTimer.start();
+                } else if (!hovered && MediaPanelService.panelOpen) {
+                    MediaPanelService.panelOpen = false;
                 }
             }
         }
