@@ -21,7 +21,8 @@ hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("quickshell ipc call clipMenu toggle"
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("~/.local/bin/lock-pc.sh"))
 hl.bind("ALT + F", hl.dsp.window.fullscreen())
 
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("skwd wall toggle"))
+-- wallpaper picker
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/.local/bin/wallselect"))
 
 -- Screenshot
 hl.bind("PRINT", hl.dsp.exec_cmd("~/.local/bin/screenshot-util all"))          -- all monitors
