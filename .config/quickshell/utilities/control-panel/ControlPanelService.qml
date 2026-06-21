@@ -13,6 +13,42 @@ QtObject {
     // --- Panel visibility ---
     property bool panelOpen: false
 
+    // --- Tailscale State ---
+    property bool tailscaleEnabled: false
+
+    property var _tailscaleStateCheck: Process {
+        id: tsStateCheck
+        command: ["bash", "-c", "tailscale status &>/dev/null && echo \"Up\" || echo \"Down\""]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.tailscaleEnabled = text.trim() === "Up";
+            }
+        }
+    }
+
+    property var _tailscaleCmd: Process {
+        id: tsCmd
+        property bool targetState: true
+        command: ["bash", "-c", "echo dummy"]
+        running: false
+        onRunningChanged: {
+            if (!running) {
+                tsStateCheck.running = false;
+                tsStateCheck.running = true;
+            }
+        }
+    }
+
+    function toggleTailscale() {
+        let newState = !tailscaleEnabled;
+        tsCmd.command = ["bash", "-c", newState ? "tailscale up" : "tailscale down"];
+        tsCmd.targetState = newState;
+        tsCmd.running = false;
+        tsCmd.running = true;
+        tailscaleEnabled = newState;
+    }
+
     // --- Keep Awake (UI only, backend to be implemented) ---
     property bool keepAwakeEnabled: false
 

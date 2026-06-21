@@ -400,6 +400,49 @@ Rectangle {
             }
         }
 
+        // --- Tailscale Indicator ---
+        Item {
+            id: tailscaleIndicator
+            visible: ControlPanelService.tailscaleEnabled
+            width: visible ? tsRow.implicitWidth + 8 : 0
+            height: 28
+            anchors.verticalCenter: parent.verticalCenter
+            clip: true
+
+            Behavior on width {
+                NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+            }
+
+            Row {
+                id: tsRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    font {
+                        family: "JetBrainsMono Nerd Font"
+                        pointSize: 11
+                    }
+                    color: Theme.primary
+                    text: "󰲝" // VPN icon
+                }
+            }
+
+            HoverHandler {
+                id: tsHover
+            }
+
+            TapHandler {
+                onTapped: {
+                    if (root.panelWindow) {
+                        ControlPanelService.panelOpen = true;
+                    }
+                }
+                cursorShape: Qt.PointingHandCursor
+            }
+        }
+
         // --- Notification History Button ---
         Item {
             id: notifHistoryBtn

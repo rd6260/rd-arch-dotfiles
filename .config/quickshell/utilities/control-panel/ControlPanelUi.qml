@@ -60,6 +60,7 @@ Item {
     property real brightnessValue: 0.0   // 0.0 – 1.0
     property bool brightnessDragging: false
 
+
     // ── Processes ────────────────────────────────────────────────────────────
     Process {
         id: nmcliScan
@@ -186,6 +187,8 @@ Item {
         command: ["bash", "-c", targetState ? "killall hyprsunset; nohup hyprsunset -t " + targetTemp + " >/dev/null 2>&1 &" : "killall hyprsunset"]
         running: false
     }
+
+
 
     Timer {
         id: nightLightDebounce
@@ -644,6 +647,15 @@ Item {
                     active: ControlPanelService.screenRecordingActive
                     cellWidth: toggleGrid.cellW
                     onToggled: ControlPanelService.toggleScreenRecording()
+                }
+
+                // ── Tailscale ──
+                ToggleButton {
+                    icon: ControlPanelService.tailscaleEnabled ? "󰲝" : "󰲜"
+                    label: "Tailscale"
+                    active: ControlPanelService.tailscaleEnabled
+                    cellWidth: toggleGrid.cellW
+                    onToggled: ControlPanelService.toggleTailscale()
                 }
             }
         }
