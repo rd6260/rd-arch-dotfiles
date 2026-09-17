@@ -1,5 +1,6 @@
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Controls
 import "../theme"
@@ -18,6 +19,8 @@ Variants {
 
         required property var modelData
         screen: modelData
+
+        readonly property bool isFocused: Hyprland.focusedMonitor != null && modelData.name === Hyprland.focusedMonitor.name
 
         // --- LayerShell Configuration ---
         WlrLayershell.layer: WlrLayer.Overlay
@@ -55,6 +58,7 @@ Variants {
         Connections {
             target: NotifHistoryService
             function onPanelOpenChanged() {
+                if (!historyOverlay.isFocused) return;
                 if (NotifHistoryService.panelOpen) {
                     historyOverlay._showing = true;
                     slideInAnim.restart();

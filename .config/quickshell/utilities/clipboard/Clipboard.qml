@@ -28,6 +28,8 @@ Variants {
         required property var modelData
         screen: modelData
 
+        readonly property bool isFocused: Hyprland.focusedMonitor != null && modelData.name === Hyprland.focusedMonitor.name
+
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "clipboard_overlay"
         exclusiveZone: -1
@@ -50,7 +52,7 @@ Variants {
         HyprlandFocusGrab {
             id: focusGrab
             windows: [panelWindow]
-            active: ClipboardService.panelOpen
+            active: isFocused && ClipboardService.panelOpen
             onCleared: ClipboardService.panelOpen = false
         }
 
@@ -71,6 +73,7 @@ Variants {
         Connections {
             target: ClipboardService
             function onPanelOpenChanged() {
+                if (!panelWindow.isFocused) return;
                 panelWindow.wasOpen = !ClipboardService.panelOpen
                 panelWindow.clipProgress = ClipboardService.panelOpen ? 1.0 : 0.0
             }

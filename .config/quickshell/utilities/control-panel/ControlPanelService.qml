@@ -13,6 +13,63 @@ QtObject {
     // --- Panel visibility ---
     property bool panelOpen: false
 
+    // --- Audio Visualizer ---
+    property bool visualizerEnabled: false
+    property var cavaData: []
+
+    property var _cavaProc: Process {
+        id: cavaProc
+        running: root.visualizerEnabled
+
+        command: ["sh", "-c", `
+            cava -p /dev/stdin <<EOF
+[general]
+bars = 24
+framerate = 60
+autosens = 1
+
+[input]
+method = pulse
+
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 1000
+bar_delimiter = 59
+
+[smoothing]
+monstercat = 1.5
+waves = 0
+gravity = 100
+noise_reduction = 0.20
+EOF
+        `]
+
+        stdout: SplitParser {
+            onRead: data => {
+                let newPoints = data.split(";")
+                    .map(p => parseFloat(p.trim()) / 1000)
+                    .filter(p => !isNaN(p))
+
+                let smoothFactor = 0.3
+
+                if (root.cavaData.length === 0 ||
+                    root.cavaData.length !== newPoints.length) {
+                    root.cavaData = newPoints
+                } else {
+                    let smoothed = []
+                    for (let i = 0; i < newPoints.length; i++) {
+                        let oldVal = root.cavaData[i]
+                        let newVal = newPoints[i]
+                        smoothed.push(oldVal + (newVal - oldVal) * smoothFactor)
+                    }
+                    root.cavaData = smoothed
+                }
+            }
+        }
+    }
+
     // --- Tailscale State ---
     property bool tailscaleEnabled: false
 

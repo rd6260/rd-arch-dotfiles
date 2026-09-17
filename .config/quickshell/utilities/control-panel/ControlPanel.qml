@@ -26,6 +26,8 @@ Variants {
         required property var modelData
         screen: modelData
 
+        readonly property bool isFocused: Hyprland.focusedMonitor != null && modelData.name === Hyprland.focusedMonitor.name
+
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "control_panel"
         exclusiveZone: -1
@@ -46,13 +48,14 @@ Variants {
         HyprlandFocusGrab {
             id: focusGrab
             windows: [panelWindow]
-            active: ControlPanelService.panelOpen
+            active: isFocused && ControlPanelService.panelOpen
             onCleared: ControlPanelService.panelOpen = false
         }
 
         // ── Hot-zone ──────────────────────────────────────────────────────────
         HoverHandler {
             onHoveredChanged: {
+                if (!panelWindow.isFocused) return;
                 if (hovered && !ControlPanelService.panelOpen) {
                     ControlPanelService.panelOpen = true;
                     // Slight delay so the window has time to resize before grabbing focus
@@ -87,6 +90,7 @@ Variants {
         Connections {
             target: ControlPanelService
             function onPanelOpenChanged() {
+                if (!panelWindow.isFocused) return;
                 panelWindow.wasOpen = !ControlPanelService.panelOpen
                 panelWindow.clipProgress = ControlPanelService.panelOpen ? 1.0 : 0.0
             }

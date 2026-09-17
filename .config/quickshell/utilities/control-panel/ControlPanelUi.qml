@@ -651,11 +651,20 @@ Item {
 
                 // ── Tailscale ──
                 ToggleButton {
-                    icon: ControlPanelService.tailscaleEnabled ? "󰲝" : "󰲜"
+                    icon: "../../assets/icons/tailscale-light.svg"
                     label: "Tailscale"
                     active: ControlPanelService.tailscaleEnabled
                     cellWidth: toggleGrid.cellW
                     onToggled: ControlPanelService.toggleTailscale()
+                }
+
+                // ── Visualizer ──
+                ToggleButton {
+                    icon: "󰤽"
+                    label: "Visualizer"
+                    active: ControlPanelService.visualizerEnabled
+                    cellWidth: toggleGrid.cellW
+                    onToggled: ControlPanelService.visualizerEnabled = !ControlPanelService.visualizerEnabled
                 }
             }
         }
@@ -1008,14 +1017,38 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 4
 
-                // Main icon
+                // Main icon (Font Icon)
                 Text {
                     id: mainIcon
+                    visible: !btn.icon.endsWith(".svg")
                     text: btn.icon
                     font { family: "JetBrainsMono Nerd Font"; pixelSize: 18 }
                     color: btn.active ? Theme.on_primary_container : Theme.on_surface_variant
                     anchors.verticalCenter: parent.verticalCenter
                     Behavior on color { ColorAnimation { duration: 160 } }
+                }
+
+                // Main icon (SVG Icon)
+                Item {
+                    visible: btn.icon.endsWith(".svg")
+                    width: 18
+                    height: 18
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        id: svgIconImg
+                        anchors.fill: parent
+                        sourceSize: Qt.size(18, 18)
+                        source: btn.icon.endsWith(".svg") ? btn.icon : ""
+                        fillMode: Image.PreserveAspectFit
+                        visible: false
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: svgIconImg
+                        color: btn.active ? Theme.on_primary_container : Theme.on_surface_variant
+                    }
                 }
 
                 // Dropdown chevron

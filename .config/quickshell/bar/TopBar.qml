@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
@@ -6,6 +8,13 @@ import qs.theme
 
 /**
  * The primary system status bar rendered across all monitors.
+ *
+ * Uses a Loader activated via Component.onCompleted so that all child
+ * components are instantiated only after the PanelWindow's Wayland surface
+ * is fully established. This is necessary for correct rendering on
+ * hot-plugged monitors: without the Loader, children bind to the parent
+ * geometry before the compositor has sent a configure event, leaving them
+ * invisible or mispositioned.
  */
 Variants {
     id: root
@@ -33,36 +42,52 @@ Variants {
         color: "transparent"
         implicitHeight: Layout.topBarHeight
 
-        // --- Core Modules ---
+        // --- Content Loader ---
+        // Deferred so children initialise after the Wayland surface is ready.
+        Loader {
+            id: contentLoader
+            anchors.fill: parent
+            active: false
 
-        // Workspace Switcher
-        Workspaces {
-            id: workspaceModule
-            targetMonitor: modelData.name
+            sourceComponent: Component {
+                Item {
+                    anchors.fill: parent
 
-            anchors {
-                left: parent.left
-                leftMargin: 15
-                verticalCenter: parent.verticalCenter
+                    // Workspace Switcher
+                    Workspaces {
+                        id: workspaceModule
+                        targetMonitor: mainBar.modelData.name
+
+                        anchors {
+                            left: parent.left
+                            leftMargin: 15
+                            verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    // Calendar / Clock
+                    Calendar {
+                        id: calendarModule
+                        anchors.centerIn: parent
+                    }
+
+                    // System Stats
+                    SystemStats {
+                        id: statusModule
+                        panelWindow: mainBar
+
+                        anchors {
+                            right: parent.right
+                            rightMargin: 15
+                            verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
             }
         }
 
-        // Calendar
-        Calendar {
-            id: calendarModule
-            anchors.centerIn: parent
-        }
-
-        // System Stats
-        SystemStats {
-            id: statusModule
-            panelWindow: mainBar
-
-            anchors {
-                right: parent.right
-                rightMargin: 15
-                verticalCenter: parent.verticalCenter
-            }
-        }
+        // Activate the loader after the surface exists so children see the
+        // correct parent geometry from the very first layout pass.
+        Component.onCompleted: contentLoader.active = true
     }
 }

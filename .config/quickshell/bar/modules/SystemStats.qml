@@ -9,6 +9,7 @@ import qs.theme
 import qs.notifications
 import Quickshell.Hyprland
 import Quickshell.Io
+import Qt5Compat.GraphicalEffects
 import "../../utilities/control-panel"
 
 /**
@@ -418,14 +419,25 @@ Rectangle {
                 anchors.centerIn: parent
                 spacing: 6
 
-                Text {
+                Item {
+                    width: 16
+                    height: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    font {
-                        family: "JetBrainsMono Nerd Font"
-                        pointSize: 11
+
+                    Image {
+                        id: tsIcon
+                        anchors.fill: parent
+                        sourceSize: Qt.size(16, 16)
+                        source: "../../assets/icons/tailscale-light.svg"
+                        fillMode: Image.PreserveAspectFit
+                        visible: false
                     }
-                    color: Theme.primary
-                    text: "󰲝" // VPN icon
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: tsIcon
+                        color: Theme.primary
+                    }
                 }
             }
 

@@ -6,6 +6,9 @@ import "notifications"
 import "utilities/clipboard"
 import "utilities/control-panel"
 import "utilities/media-panel"
+import "utilities/app-launcher"
+import "utilities/polkit"
+import "utilities/visualizer"
 
 /** Main shell entry point; manages surface orchestration. */
 ShellRoot {
@@ -55,5 +58,20 @@ ShellRoot {
     // Bottom-left corner media panel
     MediaPanel {
         id: mediaPanel
+    }
+
+    // App Launcher overlay
+    AppLauncher {
+        id: appLauncher
+    }
+
+    // PolicyKit authentication dialog
+    PolkitDialog {
+        id: polkitDialog
+    }
+
+    // Audio visualizer overlay (cava-based)
+    Visualizer {
+        id: audioVisualizer
     }
 }

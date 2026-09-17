@@ -1,0 +1,1 @@
+/home/senku/.config/quickshell/utilities/sync-lyrics/target/release/synced-lyrics: /home/senku/.config/quickshell/utilities/sync-lyrics/src/lrc.rs /home/senku/.config/quickshell/utilities/sync-lyrics/src/lrclib.rs /home/senku/.config/quickshell/utilities/sync-lyrics/src/main.rs /home/senku/.config/quickshell/utilities/sync-lyrics/src/mpd.rs
