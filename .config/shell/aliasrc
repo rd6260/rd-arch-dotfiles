@@ -1,5 +1,7 @@
 #!/bin/bash
 
+alias random-ascii-shit="cat /dev/urandom | tr -dc '[:print:]'"
+
 alias livewall='mpvpaper -o '\''--loop-file=inf --ytdl-format="bestvideo[height=1080]"'\'' all'
 
 yt-jelly() {
@@ -180,7 +182,7 @@ alias pkglist='pacman -Qs --color=always | less -R'
 
 
 # for managing configs with git bare ripository
-alias config='/usr/bin/git --git-dir=$HOME/dev/yajurveda/rd-arch-dotfiles/.git --work-tree=$HOME'
+alias config='/usr/bin/git --git-dir=$HOME/dev/inventory/rd-arch-dotfiles/.git --work-tree=$HOME'
 
 # =============================================================================
 # =============================================================================
