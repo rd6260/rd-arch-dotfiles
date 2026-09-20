@@ -1,15 +1,13 @@
-[config.wallpaper]
-command = "swww img --transition-type center {{ image }}"
-set = true
+[config]
 
-[templates.waybar]
-input_path = '~/.config/matugen/waybar.css'
-output_path = '~/.config/waybar/colors.css'
-post_hook = 'pkill -SIGUSR2 waybar'
+# [templates.waybar]
+# input_path = '~/.config/matugen/waybar.css'
+# output_path = '~/.config/waybar/colors.css'
+# post_hook = 'pkill -SIGUSR2 waybar'
 
-[templates.rofi]
-input_path = 'rofi.rasi'
-output_path = '~/.config/rofi/colors.rasi'
+# [templates.rofi]
+# input_path = 'rofi.rasi'
+# output_path = '~/.config/rofi/colors.rasi'
 
 [templates.kitty]
 input_path = 'kitty.conf'
@@ -20,3 +18,7 @@ post_hook = "pkill -SIGUSR1 kitty"
 input_path = 'hyprland.conf'
 output_path = '~/.config/hypr/themes/colors.conf'
 post_hook = 'hyprctl reload'
+
+[templates.quickshell]
+input_path = 'quickshell.json'
+output_path = '~/.config/quickshell/theme/colors.json'
