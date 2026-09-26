@@ -42,10 +42,10 @@ hl.window_rule({
 	float = true,
 })
 
-hl.window_rule({
-	name = "vesktop-workspace",
-	match = {
-		class = "^(vesktop)$",
-	},
-	workspace = "2",
-})
+-- hl.window_rule({
+-- 	name = "vesktop-workspace",
+-- 	match = {
+-- 		class = "^(vesktop)$",
+-- 	},
+-- 	workspace = "2",
+-- })

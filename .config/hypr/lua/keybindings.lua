@@ -9,7 +9,6 @@ local mainMod = "SUPER"
 -- local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 -- closeWindowBind:set_enabled(false)
 -- hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
-hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("rofi -show drun -theme launcher.rasi"))
 hl.bind(mainMod .. " + return", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
@@ -18,11 +17,12 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle only
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("quickshell ipc call clipMenu toggle")) -- Clipboard
+hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("quickshell ipc call appLauncher toggle")) -- App Launcher
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("~/.local/bin/lock-pc.sh"))
 hl.bind("ALT + F", hl.dsp.window.fullscreen())
 
 -- wallpaper picker
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/.local/bin/wallselect"))
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("quickshell -p ~/.config/quickshell/utilities/wallpicker"))
 
 -- Screenshot
 hl.bind("PRINT", hl.dsp.exec_cmd("~/.local/bin/screenshot-util all"))          -- all monitors
@@ -56,15 +56,20 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind(mainMod .. " + Z",         hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + X",         hl.dsp.window.resize(), { mouse = true })
 
--- Laptop multimedia keys for volume and LCD brightness
+-- Laptop multimedia keys for volume
 hl.bind("XF86AudioRaiseVolume",  hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"),  { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume",  hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),       { locked = true, repeating = true })
 hl.bind("XF86AudioMute",         hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),      { locked = true, repeating = true })
 hl.bind("XF86AudioMicMute",      hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),    { locked = true, repeating = true })
+-- Brightness main monitor
 hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl -n2 set 5%+"),                       { locked = true, repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -n2 set 5%-"),                       { locked = true, repeating = true })
+-- Brightness external monitor (ddcutil)
+hl.bind("SHIFT + XF86MonBrightnessUp",   hl.dsp.exec_cmd("ddcutil setvcp 10 + 5"),                   { locked = true, repeating = true })
+hl.bind("SHIFT + XF86MonBrightnessDown", hl.dsp.exec_cmd("ddcutil setvcp 10 - 5"),                   { locked = true, repeating = true })
 
--- Requires playerctl
+
+-- Media Control
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),        { locked = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"),  { locked = true })
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"),  { locked = true })
