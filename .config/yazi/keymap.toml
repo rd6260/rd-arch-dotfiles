@@ -1,4 +1,10 @@
+# [[mgr.prepend_keymap]]
+# on  = ["<A-d>"]
+# run = 'shell -- ripdrag -xd -W 350 $@'
+# desc = "Drag files with ripdrag"
+     
+
 [[mgr.prepend_keymap]]
-on  = ["<A-d>"]
-run = 'shell -- ripdrag -xd -W 350 $@'
-desc = "Drag files with ripdrag"
+on   = [ "<A-d>" ]
+run  = "plugin drag"
+desc = "Drag Files"

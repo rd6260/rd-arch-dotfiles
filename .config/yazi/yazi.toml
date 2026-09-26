@@ -1,0 +1,13 @@
+[opener]
+zathura = [
+  { run = 'zathura %s', orphan = true, desc = "Open in Zathura" },
+]
+extract = [
+  { run = '''for f in %s; do 7z x -y "$f"; done''', desc = "Extract here (7z)" },
+]
+
+[open]
+prepend_rules = [
+  { url = "*.cbz", use = ["zathura", "extract"] },
+  { url = "*.cbr", use = ["zathura", "extract"] },
+]
