@@ -9,6 +9,7 @@ import "utilities/media-panel"
 import "utilities/app-launcher"
 import "utilities/polkit"
 import "utilities/visualizer"
+import "utilities/sync-lyrics/qml"
 
 /** Main shell entry point; manages surface orchestration. */
 ShellRoot {
@@ -73,5 +74,10 @@ ShellRoot {
     // Audio visualizer overlay (cava-based)
     Visualizer {
         id: audioVisualizer
+    }
+
+    // Synced lyrics overlay (toggleable from control panel)
+    SyncLyrics {
+        id: syncLyrics
     }
 }

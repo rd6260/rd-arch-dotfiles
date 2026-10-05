@@ -109,6 +109,9 @@ EOF
     // --- Keep Awake (UI only, backend to be implemented) ---
     property bool keepAwakeEnabled: false
 
+    // --- Synced Lyrics overlay ---
+    property bool lyricsEnabled: true
+
     // --- Night Light ---
     property bool nightLightEnabled: false
     property int nightLightTemp: 3000

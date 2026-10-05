@@ -666,6 +666,15 @@ Item {
                     cellWidth: toggleGrid.cellW
                     onToggled: ControlPanelService.visualizerEnabled = !ControlPanelService.visualizerEnabled
                 }
+
+                // ── Synced Lyrics ──
+                ToggleButton {
+                    icon: "󰝚"
+                    label: "Lyrics"
+                    active: ControlPanelService.lyricsEnabled
+                    cellWidth: toggleGrid.cellW
+                    onToggled: ControlPanelService.lyricsEnabled = !ControlPanelService.lyricsEnabled
+                }
             }
         }
 

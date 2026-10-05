@@ -5,7 +5,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
 import qs.theme
-// import Quickshell.Bluetooth
+import Quickshell.Bluetooth
 import qs.notifications
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -326,6 +326,89 @@ Rectangle {
             }
         }
 
+
+        // --- Separator (before Bluetooth) ---
+        Rectangle {
+            visible: btRepeater.connectedCount > 0
+            width: 1
+            height: 16
+            color: Theme.outline_variant
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
+        // --- Bluetooth Device Batteries ---
+        Row {
+            id: btBatteriesRow
+            spacing: 8
+            anchors.verticalCenter: parent.verticalCenter
+            visible: btRepeater.connectedCount > 0
+
+            // Count helper so the separator can react
+            property int connectedCount: 0
+
+            Repeater {
+                id: btRepeater
+
+                property int connectedCount: 0
+
+                model: Bluetooth.devices
+
+                delegate: Row {
+                    spacing: 6
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    required property var modelData
+
+                    readonly property bool isConnected: modelData.state === BluetoothDeviceState.Connected
+                    readonly property bool hasBattery: isConnected && modelData.batteryAvailable
+                    readonly property real btLevel: modelData.battery  // 0.0 – 1.0
+
+                    visible: isConnected
+
+                    // Track connected devices so the parent Row / separator can react
+                    Component.onCompleted: if (isConnected) btRepeater.connectedCount++
+                    onIsConnectedChanged: btRepeater.connectedCount += isConnected ? 1 : -1
+
+                    // Battery icon (mirrors laptop battery icons; falls back to BT glyph)
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        font {
+                            family: "JetBrainsMono Nerd Font"
+                            pointSize: 10
+                        }
+                        color: hasBattery && btLevel < 0.2 ? Theme.critical : Theme.primary
+                        text: {
+                            if (!hasBattery)
+                                return "";  // no battery info → Bluetooth glyph
+                            const pct = btLevel * 100;
+                            if (pct < 10)  return "󰁺";
+                            if (pct < 20)  return "󰁻";
+                            if (pct < 30)  return "󰁼";
+                            if (pct < 40)  return "󰁽";
+                            if (pct < 50)  return "󰁾";
+                            if (pct < 60)  return "󰁿";
+                            if (pct < 70)  return "󰂀";
+                            if (pct < 80)  return "󰂁";
+                            if (pct < 90)  return "󰂂";
+                            return "󰁹";   // 90–100 %
+                        }
+                    }
+
+                    // Battery percentage label
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: hasBattery && btLevel < 0.2 ? Theme.critical : Theme.on_surface
+                        font {
+                            family: "Google Sans Medium"
+                            pointSize: 10
+                        }
+                        text: hasBattery ? Math.round(btLevel * 100) + "%" : "?%"
+                        visible: isConnected
+                    }
+                }
+            }
+        }
+
         // --- Separator ---
         Rectangle {
             width: 1
@@ -333,6 +416,7 @@ Rectangle {
             color: Theme.outline_variant
             anchors.verticalCenter: parent.verticalCenter
         }
+
 
         // --- Screen Record Indicator ---
         Item {
