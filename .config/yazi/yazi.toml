@@ -6,7 +6,7 @@ extract = [
   { run = '''for f in %s; do 7z x -y "$f"; done''', desc = "Extract here (7z)" },
 ]
 live-wallpaper = [
-  { run = '''for f in %s; do echo "loadfile \"$f\"" | socat - /tmp/mpvpaper-socket; break; done''', orphan = true, desc = "Set live wallpaper" },
+  { run = 'live-wall -s %s', orphan = true, desc = "Set live wallpaper" },
 ]
 
 [open]

@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# small controller for mpvpaper
+
+SOCKET="/tmp/mpvpaper-socket"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/mpvctl"
+STATE_FILE="$STATE_DIR/state"
+
+# Defaults (used the first time, before any state is saved)
+WALLPAPER="/media/nexus/shelf/Videos/Wallpaper/Chainsaw-Man-Girls-by-Inoitoh.mp4"
+MONITOR="ALL"
+
+MPV_OPTS="input-ipc-server=$SOCKET --loop-file=inf --audio=no ytdl-format='bestvideo[height<=1080]'"
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [options]
+
+  -s FILE      Set wallpaper (starts mpvpaper first if it isn't running)
+  -m MONITOR   Change monitor (e.g. HDMI-A-1, DP-1, or ALL). Restarts mpvpaper
+  -t           Toggle play/pause
+  -S           Start mpvpaper (with last used wallpaper/monitor)
+  -k           Kill mpvpaper
+  -l           List monitors (needs wlr-randr)
+  -h           Show this help
+
+Options can be combined, e.g.:  $(basename "$0") -m DP-1 -s ~/video.mp4
+EOF
+}
+
+is_running() { pgrep -x mpvpaper >/dev/null 2>&1; }
+
+load_state() { [[ -f "$STATE_FILE" ]] && source "$STATE_FILE"; }
+
+save_state() {
+    mkdir -p "$STATE_DIR"
+    printf 'WALLPAPER=%q\nMONITOR=%q\n' "$WALLPAPER" "$MONITOR" > "$STATE_FILE"
+}
+
+send_cmd() {
+    # $1 = JSON command string
+    if command -v socat >/dev/null 2>&1; then
+        echo "$1" | socat - "$SOCKET" >/dev/null
+    elif command -v nc >/dev/null 2>&1; then
+        echo "$1" | nc -U -N "$SOCKET" >/dev/null 2>&1 || echo "$1" | nc -U "$SOCKET" >/dev/null
+    else
+        echo "Error: need 'socat' or 'nc' installed to talk to mpvpaper." >&2
+        exit 1
+    fi
+}
+
+start_mpvpaper() {
+    if [[ ! -f "$WALLPAPER" ]]; then
+        echo "Error: wallpaper not found: $WALLPAPER" >&2
+        exit 1
+    fi
+    rm -f "$SOCKET"
+    nohup mpvpaper --mpv-options "$MPV_OPTS" "$MONITOR" "$WALLPAPER" >/dev/null 2>&1 &
+    disown
+    # wait up to ~5s for the IPC socket
+    for _ in {1..50}; do
+        [[ -S "$SOCKET" ]] && break
+        sleep 0.1
+    done
+    save_state
+    echo "Started mpvpaper on $MONITOR: $WALLPAPER"
+}
+
+kill_mpvpaper() {
+    if is_running; then
+        pkill -x mpvpaper
+        rm -f "$SOCKET"
+        echo "mpvpaper killed."
+    else
+        echo "mpvpaper is not running."
+    fi
+}
+
+# ---- parse flags ----
+NEW_WALL="" NEW_MON="" DO_TOGGLE=0 DO_START=0 DO_KILL=0 DO_LIST=0
+
+[[ $# -eq 0 ]] && { usage; exit 0; }
+
+while getopts ":s:m:tSklh" opt; do
+    case $opt in
+        s) NEW_WALL="$OPTARG" ;;
+        m) NEW_MON="$OPTARG" ;;
+        t) DO_TOGGLE=1 ;;
+        S) DO_START=1 ;;
+        k) DO_KILL=1 ;;
+        l) DO_LIST=1 ;;
+        h) usage; exit 0 ;;
+        :) echo "Option -$OPTARG needs an argument." >&2; exit 1 ;;
+        \?) echo "Unknown option: -$OPTARG" >&2; usage; exit 1 ;;
+    esac
+done
+
+load_state
+
+if (( DO_LIST )); then
+    if command -v wlr-randr >/dev/null 2>&1; then
+        wlr-randr | grep -E '^[^ ]'
+    else
+        echo "wlr-randr not found. Try: hyprctl monitors | grep Monitor   (or swaymsg -t get_outputs)"
+    fi
+    exit 0
+fi
+
+if (( DO_KILL )); then
+    kill_mpvpaper
+    exit 0
+fi
+
+MON_CHANGED=0
+if [[ -n "$NEW_MON" && "$NEW_MON" != "$MONITOR" ]]; then
+    MONITOR="$NEW_MON"
+    MON_CHANGED=1
+fi
+
+if [[ -n "$NEW_WALL" ]]; then
+    WALLPAPER="$(realpath -- "$NEW_WALL" 2>/dev/null || echo "$NEW_WALL")"
+fi
+
+if [[ -n "$NEW_WALL" || -n "$NEW_MON" || $DO_START -eq 1 ]]; then
+    if is_running; then
+        if (( MON_CHANGED )); then
+            # monitor is a launch argument, so a restart is required
+            pkill -x mpvpaper
+            sleep 0.5
+            start_mpvpaper
+        elif [[ -n "$NEW_WALL" ]]; then
+            send_cmd "{\"command\":[\"loadfile\",\"$WALLPAPER\"]}"
+            save_state
+            echo "Wallpaper set: $WALLPAPER"
+        else
+            echo "mpvpaper is already running."
+        fi
+    else
+        start_mpvpaper
+    fi
+fi
+
+if (( DO_TOGGLE )); then
+    if is_running; then
+        send_cmd '{"command":["cycle","pause"]}'
+        echo "Toggled play/pause."
+    else
+        echo "mpvpaper is not running. Start it with -S." >&2
+        exit 1
+    fi
+fi
