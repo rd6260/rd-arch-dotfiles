@@ -26,5 +26,5 @@ vim.lsp.config("dartls", {
   },
 })
 
-local servers = { "html", "cssls", "gopls", "pyright", "vtsls", "dartls", "qmlls" }
+local servers = { "html", "cssls", "gopls", "pyright", "vtsls", "dartls", "qmlls", "rust_analyzer" }
 vim.lsp.enable(servers)
