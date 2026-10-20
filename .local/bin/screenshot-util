@@ -4,40 +4,50 @@ SS_DIR="$HOME/Pictures/screenshots"
 FILENAME="$SS_DIR/ss_$(date +%Y%m%d_%H%M%S).png"
 
 # ensure screenshot directory exists
-if [ ! -d "$SS_DIR" ]; then
-  mkdir -p "$SS_DIR"
-fi
+mkdir -p "$SS_DIR"
 
-screenshot_notify() {
-  [ -f $FILENAME ] && notify-send "Screenshot taken"
+# Print the name of the currently focused output (empty if unknown)
+get_focused_output() {
+  if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] && command -v hyprctl >/dev/null 2>&1; then
+    hyprctl monitors -j | jq -r '.[] | select(.focused) | .name'
+  elif [ -n "$SWAYSOCK" ] && command -v swaymsg >/dev/null 2>&1; then
+    swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name'
+  elif [ -n "$NIRI_SOCKET" ] && command -v niri >/dev/null 2>&1; then
+    niri msg --json focused-output | jq -r '.name'
+  fi
+}
+
+# Save to file, copy to clipboard
+finish() {
+  [ -s "$FILENAME" ] || exit 1
+  wl-copy < "$FILENAME"
+  notify-send "Screenshot taken" "$FILENAME"
 }
 
 # All monitors
 screenshot_all() {
-  grim - | tee $FILENAME | wl-copy 
+  grim "$FILENAME" && finish
 }
 
 # Selected area
 screenshot_selective() {
   AREA=$(slurp -w 0) || exit 0
-  grim -g "$AREA" - | tee "$FILENAME" | wl-copy
+  grim -g "$AREA" "$FILENAME" && finish
 }
 
-# Current monitor
-screenshot_default() {
-  grim - | tee $FILENAME | wl-copy && notify-send "Screenshot taken"
+# Current (focused) monitor
+screenshot_current() {
+  OUTPUT=$(get_focused_output)
+  if [ -n "$OUTPUT" ]; then
+    grim -o "$OUTPUT" "$FILENAME" && finish
+  else
+    # couldn't detect focused monitor, fall back to all outputs
+    screenshot_all
+  fi
 }
 
 case "$1" in
-  all)
-    screenshot_all
-      ;;
-  selective)
-    screenshot_selective
-      ;;
-  *)
-    screenshot_default
-      ;;
+  all)       screenshot_all ;;
+  selective) screenshot_selective ;;
+  current|*) screenshot_current ;;
 esac
-
-screenshot_notify
