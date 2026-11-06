@@ -28,9 +28,7 @@ Variants {
         screen: modelData
 
         // --- Layer Shell Configuration ---
-        // Overlay (not Top) so the full-screen bezel window, which shares the
-        // Top layer, can never be stacked above the bar on hot-plugged monitors.
-        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "quickshell-topbar"
 
         // --- Geometry & Positioning ---
@@ -38,6 +36,17 @@ Variants {
             top: true
             left: true
             right: true
+        }
+
+        // --- Stacking Order ---
+        // The full-screen bezel window shares the Top layer, and surfaces are
+        // stacked by map order. Map the bar slightly later so it always lands
+        // above the bezel, including on hot-plugged monitors.
+        visible: false
+        Timer {
+            interval: 300
+            running: true
+            onTriggered: mainBar.visible = true
         }
 
         // --- Visual Styling ---

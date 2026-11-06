@@ -18,6 +18,17 @@ PanelWindow {
     margins.bottom: 10 // bottom margin, from screen's bottom. Applies only if anchors.bottom is true
     margins.top: 50 // top marin, from screen's top., only if anchors.top is true
 
+    // The carousel stays hidden (a loading indicator shows) until cache.sh
+    // has generated any missing thumbnails
+    property bool cacheReady: false
+
+    Process {
+        id: cacheProc
+        command: ["bash", Quickshell.shellPath("cache.sh"), Quickshell.shellDir]
+        running: true
+        onExited: main.cacheReady = true
+    }
+
     aboveWindows: true // is it above all window? yes
     exclusionMode: "Ignore" // ignore the other windows which are not part of it.
     exclusiveZone: 1 // se the exclusive Zon, I too know nothing about it, but it has become a habit to me.
@@ -69,9 +80,47 @@ PanelWindow {
         }
     }
 
+    // Loading indicator, shown while cache.sh is running
+    Column {
+        anchors.centerIn: parent
+        spacing: 14
+        visible: !main.cacheReady
+
+        Canvas {
+            id: spinner
+            width: 48
+            height: 48
+            anchors.horizontalCenter: parent.horizontalCenter
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.reset();
+                ctx.lineWidth = 4;
+                ctx.lineCap = "round";
+                ctx.strokeStyle = configs.border_color;
+                ctx.beginPath();
+                ctx.arc(width / 2, height / 2, width / 2 - 4, 0, Math.PI * 1.5);
+                ctx.stroke();
+            }
+            RotationAnimator on rotation {
+                from: 0; to: 360
+                duration: 900
+                loops: Animation.Infinite
+                running: !main.cacheReady
+            }
+        }
+
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "Generating thumbnails…"
+            color: configs.border_color
+            font.pixelSize: 16
+        }
+    }
+
     PathView { // the path view, it defines a shape, where elements are present as row
         id: pv
         anchors.fill: parent // fill the parent
+        opacity: main.cacheReady ? 1 : 0 // hidden while loading, but keeps keyboard focus (Escape still works)
         focus: true // automatically provide this one the focus
         model: folderModel // what model to use? use what we imported from labs
         
