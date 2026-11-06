@@ -17,12 +17,31 @@ Item {
     // ── Geometry ────────────────────────────────────────────────────────────
     // Expand to include the fillets (32px above, 32px left) for a fluid morphing curve
     width: 320 + 32
-    height: contentCol.implicitHeight + 24 + 32
+    height: bodyHeight + 32
 
     // Accept keyboard focus for Escape key
     focus: true
     Keys.onEscapePressed: {
         ControlPanelService.panelOpen = false;
+    }
+
+    // ── Pages ────────────────────────────────────────────────────────────────
+    property bool audioPage: false
+    readonly property real audioListMaxHeight: 380
+    readonly property real bodyHeight: audioPage
+        ? 12 + 48 + Math.min(audioList.implicitHeight, audioListMaxHeight) + 12
+        : contentCol.implicitHeight + 24
+
+    Connections {
+        target: ControlPanelService
+        function onPanelOpenChanged() {
+            if (!ControlPanelService.panelOpen) panelRoot.audioPage = false;
+        }
+    }
+
+    // Trackers so every sink/source/stream exposes a bound `audio` object
+    PwObjectTracker {
+        objects: Pipewire.nodes.values.filter(n => n.audio != null || n.isStream || n.isSink)
     }
 
     // ── Pipewire state ───────────────────────────────────────────────────────
@@ -301,6 +320,7 @@ Item {
         Column {
             id: contentCol
             width: parent.width
+            visible: !panelRoot.audioPage
             anchors.top: parent.top
             anchors.topMargin: 12
 
@@ -462,25 +482,6 @@ Item {
                     }
                 }
 
-                // ── Speaker ──
-                ToggleButton {
-                    icon: panelRoot.speakerMuted ? "󰖁"
-                        : panelRoot.speakerVol >= 0.6 ? "󰕾"
-                        : panelRoot.speakerVol >= 0.3 ? "󰖀" : "󰕿"
-                    label: panelRoot.speakerMuted ? "Muted" : Math.round(panelRoot.speakerVol * 100) + "%"
-                    active: !panelRoot.speakerMuted
-                    hasDropdown: true
-                    dropdownOpen: panelRoot.expandedSection === "speaker"
-                    cellWidth: toggleGrid.cellW
-                    onToggled: {
-                        panelRoot.expandedSection = panelRoot.expandedSection === "speaker" ? "none" : "speaker";
-                    }
-                    onLongToggled: {
-                        if (panelRoot.activeSink?.audio)
-                            panelRoot.activeSink.audio.muted = !panelRoot.speakerMuted;
-                    }
-                }
-
                 // ── Mic ──
                 ToggleButton {
                     icon: panelRoot.micMuted ? "󰍭" : "󰍬"
@@ -572,6 +573,8 @@ Item {
 
             // ── Volume slider ──
             SliderRow {
+                hasArrow: true
+                onArrowClicked: panelRoot.audioPage = true
                 icon: panelRoot.speakerMuted ? "󰖁"
                     : panelRoot.speakerVol >= 0.6 ? "󰕾"
                     : panelRoot.speakerVol >= 0.3 ? "󰖀" : "󰕿"
@@ -742,63 +745,6 @@ Item {
                         onConnectRequested: ssid => {
                             nmcliConnect.targetSsid = ssid;
                             nmcliConnect.running = true;
-                        }
-                    }
-                }
-            }
-            }
-        }
-
-        // ─── Speaker Device List ─────────────────────────────────────────────
-        Item {
-            width: parent.width
-            // implicitHeight of speakerColumn (a Column) is reliably the sum of its children
-            height: panelRoot.expandedSection === "speaker" ? speakerColumn.implicitHeight + 8 : 0
-
-            Item {
-                width: parent.width
-                height: parent.height
-                clip: speakerAnim.running
-                visible: height > 0
-                Behavior on height { NumberAnimation { id: speakerAnim; duration: 300; easing.type: Easing.OutExpo } }
-
-            Column {
-                id: speakerColumn
-                width: parent.width
-                topPadding: 4
-
-                Item {
-                    width: parent.width; height: 32
-                    Text {
-                        anchors { left: parent.left; leftMargin: 20; verticalCenter: parent.verticalCenter }
-                        text: "Output Device"
-                        color: Theme.on_surface_variant
-                        font { family: "Google Sans Medium"; pixelSize: 11 }
-                    }
-                }
-
-                Rectangle {
-                    width: parent.width - 32; height: 1
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: Theme.outline_variant; opacity: 0.4
-                }
-
-                // Repeater in Column: each item's actual height drives implicitHeight correctly.
-                // Items with height:0 are excluded from layout (unlike ListView).
-                Column {
-                    id: speakerDevices
-                    width: parent.width
-
-                    Repeater {
-                        model: Pipewire.nodes
-                        delegate: AudioDeviceDelegate {
-                            required property var modelData
-                            visible: modelData.isSink && !modelData.isStream && modelData.audio != null
-                            height: visible ? 44 : 0
-                            device: modelData
-                            activeDevice: panelRoot.activeSink
-                            isSink: true
-                            width: speakerDevices.width
                         }
                     }
                 }
@@ -977,106 +923,88 @@ Item {
     }
 }
 
-    // ── Inline SliderRow component ───────────────────────────────────────────
-    component SliderRow: Item {
-        id: sliderRoot
+    // ── Audio mixer page ──────────────────────────────────────────────────
+    Item {
+        id: audioPageItem
+        parent: panelBody
+        visible: panelRoot.audioPage
+        width: parent.width
+        y: 12
+        height: 48 + Math.min(audioList.implicitHeight, panelRoot.audioListMaxHeight)
 
-        property string icon: ""
-        property real   value: 0.0 // 0.0 to 1.0
-        property bool   active: true
-        property string accentColor: Theme.primary
+        Item {
+            id: audioHeader
+            width: parent.width; height: 48
 
-        signal sliderMoved(real value)
-        signal iconClicked()
-        signal dragStarted()
-        signal dragFinished()
-
-        height: 40
-
-        Row {
-            anchors.fill: parent
-            anchors.leftMargin: 20
-            anchors.rightMargin: 20
-            spacing: 12
-
-            // Icon Button
-            Item {
-                width: 32
-                height: 32
-                anchors.verticalCenter: parent.verticalCenter
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 16
-                    color: iconHover.containsMouse ? Qt.alpha(Theme.on_surface, 0.08) : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
-                }
-
+            Rectangle {
+                id: backBtn
+                width: 32; height: 32; radius: 16
+                anchors { left: parent.left; leftMargin: 20; verticalCenter: parent.verticalCenter }
+                color: backHover.containsMouse ? Qt.alpha(Theme.on_surface, 0.08) : "transparent"
                 Text {
                     anchors.centerIn: parent
-                    text: sliderRoot.icon
+                    text: "󰅁"
                     font { family: "JetBrainsMono Nerd Font"; pixelSize: 16 }
-                    color: sliderRoot.active ? sliderRoot.accentColor : Theme.on_surface_variant
-                    Behavior on color { ColorAnimation { duration: 160 } }
+                    color: Theme.on_surface
                 }
-
-                HoverHandler { id: iconHover }
-                TapHandler {
-                    cursorShape: Qt.PointingHandCursor
-                    onTapped: sliderRoot.iconClicked()
-                }
+                HoverHandler { id: backHover }
+                TapHandler { cursorShape: Qt.PointingHandCursor; onTapped: panelRoot.audioPage = false }
             }
+            Text {
+                anchors { left: backBtn.right; leftMargin: 12; verticalCenter: parent.verticalCenter }
+                text: "Sound"
+                color: Theme.on_surface
+                font { family: "Google Sans Medium"; pixelSize: 16 }
+            }
+        }
 
-            // Slider Track
-            Item {
-                id: trackArea
-                width: parent.width - 44
-                height: 18
-                anchors.verticalCenter: parent.verticalCenter
+        Flickable {
+            y: audioHeader.height
+            width: parent.width
+            height: parent.height - audioHeader.height
+            contentWidth: width
+            contentHeight: audioList.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-                // Background track
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 9
-                    color: Theme.surface_container_high
-                    
-                    // Hover effect
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 9
-                        color: mouseArea.containsMouse ? Qt.alpha(Theme.on_surface, 0.04) : "transparent"
-                        Behavior on color { ColorAnimation { duration: 100 } }
+            Column {
+                id: audioList
+                width: parent.width
+
+                Text {
+                    leftPadding: 20; topPadding: 4; bottomPadding: 4
+                    text: "Output"
+                    color: Theme.on_surface_variant
+                    font { family: "Google Sans Medium"; pixelSize: 11 }
+                }
+                Repeater {
+                    model: Pipewire.nodes
+                    delegate: MixerDevice {
+                        required property var modelData
+                        device: modelData
+                        activeDevice: panelRoot.activeSink
+                        isSinkGroup: true
                     }
                 }
 
-                // Fill track
                 Rectangle {
-                    width: Math.max(18, trackArea.width * sliderRoot.value)
-                    height: 18
-                    radius: 9
-                    color: sliderRoot.active ? sliderRoot.accentColor : Theme.outline_variant
-                    Behavior on color { ColorAnimation { duration: 160 } }
+                    width: parent.width - 32; height: 1
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: Theme.outline_variant; opacity: 0.4
                 }
-
-                MouseArea {
-                    id: mouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    
-                    function updateValue(mx) {
-                        let val = Math.max(0.0, Math.min(1.0, mx / width));
-                        sliderRoot.sliderMoved(val);
-                    }
-                    
-                    onPressed: mouse => {
-                        sliderRoot.dragStarted();
-                        updateValue(mouse.x);
-                    }
-                    onPositionChanged: mouse => {
-                        if (pressed) updateValue(mouse.x);
-                    }
-                    onReleased: mouse => {
-                        sliderRoot.dragFinished();
+                Text {
+                    leftPadding: 20; topPadding: 8; bottomPadding: 4
+                    text: "Input"
+                    color: Theme.on_surface_variant
+                    font { family: "Google Sans Medium"; pixelSize: 11 }
+                }
+                Repeater {
+                    model: Pipewire.nodes
+                    delegate: MixerDevice {
+                        required property var modelData
+                        device: modelData
+                        activeDevice: panelRoot.activeSource
+                        isSinkGroup: false
                     }
                 }
             }

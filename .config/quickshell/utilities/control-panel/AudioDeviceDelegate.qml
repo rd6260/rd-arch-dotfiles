@@ -51,20 +51,19 @@ Item {
         // Device name — shifts right when active dot is visible
         Text {
             id: deviceLabel
-            // Use x-based positioning so we can animate the indent
-            x: root.isActive ? 26 : 12
             anchors {
+                left: parent.left
+                leftMargin: root.isActive ? 26 : 12
                 right: parent.right
                 rightMargin: 12
                 verticalCenter: parent.verticalCenter
             }
-            width: parent.width - x - 12
             text: root.device?.description || root.device?.name || "Unknown Device"
             color: root.isActive ? Theme.on_secondary_container : Theme.on_surface
             font { family: "Google Sans"; pixelSize: 12 }
             elide: Text.ElideRight
 
-            Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+            Behavior on anchors.leftMargin { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 120 } }
         }
 
