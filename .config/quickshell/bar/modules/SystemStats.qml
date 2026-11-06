@@ -538,6 +538,7 @@ Rectangle {
             TapHandler {
                 onTapped: {
                     if (root.panelWindow) {
+                        ControlPanelService.panelScreen = root.panelWindow.screen?.name ?? "";
                         ControlPanelService.panelOpen = true;
                     }
                 }

@@ -10,4 +10,6 @@ QtObject {
 
     // --- Panel visibility ---
     property bool panelOpen: false
+    // Name of the screen the panel is open on
+    property string panelScreen: ""
 }

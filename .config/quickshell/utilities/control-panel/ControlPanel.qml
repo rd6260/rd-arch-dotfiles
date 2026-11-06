@@ -26,6 +26,8 @@ Variants {
         required property var modelData
         screen: modelData
 
+        // Open only on the screen the panel was triggered from
+        readonly property bool open: ControlPanelService.panelOpen && ControlPanelService.panelScreen === modelData.name
         readonly property bool isFocused: Hyprland.focusedMonitor != null && modelData.name === Hyprland.focusedMonitor.name
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -39,8 +41,8 @@ Variants {
         anchors { bottom: true; right: true }
 
         // Closed → tiny 4×4 hot-zone. Open → sized to content + margins.
-        implicitWidth:  ControlPanelService.panelOpen ? panelUi.width  + Layout.sideBarWidth + 32 : 4
-        implicitHeight: ControlPanelService.panelOpen ? panelUi.height + Layout.bottomBarHeight + 32 : 4
+        implicitWidth:  panelWindow.open ? panelUi.width  + Layout.sideBarWidth + 32 : 4
+        implicitHeight: panelWindow.open ? panelUi.height + Layout.bottomBarHeight + 32 : 4
 
         // ── Focus grab ────────────────────────────────────────────────────────
         // Bound directly to panelOpen so it activates/deactivates automatically,
@@ -48,19 +50,19 @@ Variants {
         HyprlandFocusGrab {
             id: focusGrab
             windows: [panelWindow]
-            active: isFocused && ControlPanelService.panelOpen
+            active: panelWindow.open
             onCleared: ControlPanelService.panelOpen = false
         }
 
         // ── Hot-zone ──────────────────────────────────────────────────────────
         HoverHandler {
             onHoveredChanged: {
-                if (!panelWindow.isFocused) return;
                 if (hovered && !ControlPanelService.panelOpen) {
+                    ControlPanelService.panelScreen = panelWindow.modelData.name;
                     ControlPanelService.panelOpen = true;
                     // Slight delay so the window has time to resize before grabbing focus
                     focusTimer.start();
-                } else if (!hovered && ControlPanelService.panelOpen) {
+                } else if (!hovered && panelWindow.open) {
                     ControlPanelService.panelOpen = false;
                 }
             }
@@ -77,23 +79,20 @@ Variants {
         property real clipProgress: 0.0
         property bool wasOpen: false
 
+        // Smooth ease-in-out grow from the bezel corner. No overshoot, and the
+        // scale origin is the panel's bezel corner, so it stays attached throughout.
+        property real clipProgressX: clipProgress
+
         Behavior on clipProgress {
             NumberAnimation {
-                duration: panelWindow.wasOpen ? 200 : 500
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: panelWindow.wasOpen
-                    ? [0.3,  0.0,  0.8,  0.15, 1.0, 1.0]
-                    : [0.38, 1.21, 0.22, 1.0,  1.0, 1.0]
+                duration: panelWindow.wasOpen ? 260 : 380
+                easing.type: Easing.InOutCubic
             }
         }
 
-        Connections {
-            target: ControlPanelService
-            function onPanelOpenChanged() {
-                if (!panelWindow.isFocused) return;
-                panelWindow.wasOpen = !ControlPanelService.panelOpen
-                panelWindow.clipProgress = ControlPanelService.panelOpen ? 1.0 : 0.0
-            }
+        onOpenChanged: {
+            panelWindow.wasOpen = !panelWindow.open
+            panelWindow.clipProgress = panelWindow.open ? 1.0 : 0.0
         }
 
         ControlPanelUi {
@@ -103,11 +102,15 @@ Variants {
             anchors.rightMargin:  Layout.sideBarWidth
             anchors.bottomMargin: Layout.bottomBarHeight
             
-            transformOrigin: Item.BottomRight
-            scale: panelWindow.clipProgress
-            // Apply a slight opacity fade to smooth the very beginning of the spring, but 
-            // the main morphing effect is the scale spring.
-            opacity: panelWindow.clipProgress > 0 ? 1.0 : 0.0
+            // Non-uniform scale from the bottom-right corner (droplet stretch/squash)
+            transform: Scale {
+                origin.x: panelUi.width
+                origin.y: panelUi.height
+                xScale: Math.max(0.001, panelWindow.clipProgressX)
+                yScale: Math.max(0.001, panelWindow.clipProgress)
+            }
+            // Fade only the very beginning; the shape morph does the rest.
+            opacity: panelWindow.clipProgress > 0.01 ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 100 } }
         }
     }

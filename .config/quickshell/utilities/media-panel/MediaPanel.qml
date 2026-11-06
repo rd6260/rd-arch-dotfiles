@@ -25,6 +25,8 @@ Variants {
         required property var modelData
         screen: modelData
 
+        // Open only on the screen the panel was triggered from
+        readonly property bool open: MediaPanelService.panelOpen && MediaPanelService.panelScreen === modelData.name
         readonly property bool isFocused: Hyprland.focusedMonitor != null && modelData.name === Hyprland.focusedMonitor.name
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -37,26 +39,26 @@ Variants {
         anchors { bottom: true; left: true }
 
         // Closed → tiny 4×4 hot-zone. Open → sized to content + margins.
-        implicitWidth:  MediaPanelService.panelOpen ? panelUi.width  + Layout.sideBarWidth + 32 : 4
-        implicitHeight: MediaPanelService.panelOpen ? panelUi.height + Layout.bottomBarHeight + 32 : 4
+        implicitWidth:  panelWindow.open ? panelUi.width  + Layout.sideBarWidth + 32 : 4
+        implicitHeight: panelWindow.open ? panelUi.height + Layout.bottomBarHeight + 32 : 4
 
         // ── Focus grab ────────────────────────────────────────────────────────
         HyprlandFocusGrab {
             id: focusGrab
             windows: [panelWindow]
-            active: isFocused && MediaPanelService.panelOpen
+            active: panelWindow.open
             onCleared: MediaPanelService.panelOpen = false
         }
 
         // ── Hot-zone ──────────────────────────────────────────────────────────
         HoverHandler {
             onHoveredChanged: {
-                if (!panelWindow.isFocused) return;
                 if (hovered && !MediaPanelService.panelOpen) {
+                    MediaPanelService.panelScreen = panelWindow.modelData.name;
                     MediaPanelService.panelOpen = true;
                     // Slight delay so the window has time to resize before grabbing focus
                     focusTimer.start();
-                } else if (!hovered && MediaPanelService.panelOpen) {
+                } else if (!hovered && panelWindow.open) {
                     MediaPanelService.panelOpen = false;
                 }
             }
@@ -85,13 +87,9 @@ Variants {
             }
         }
 
-        Connections {
-            target: MediaPanelService
-            function onPanelOpenChanged() {
-                if (!panelWindow.isFocused) return;
-                panelWindow.wasOpen = !MediaPanelService.panelOpen
-                panelWindow.clipProgress = MediaPanelService.panelOpen ? 1.0 : 0.0
-            }
+        onOpenChanged: {
+            panelWindow.wasOpen = !panelWindow.open
+            panelWindow.clipProgress = panelWindow.open ? 1.0 : 0.0
         }
 
         MediaPanelUi {
