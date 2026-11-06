@@ -477,9 +477,15 @@ Rectangle {
 
             TapHandler {
                 onTapped: {
-                    if (root.panelWindow) {
-                        ControlPanelService.panelOpen = true;
-                    }
+                    var mapped = screenRecIndicator.mapToItem(root.panelWindow.contentItem, 0, 0);
+                    var centerX = mapped.x + (screenRecIndicator.width / 2);
+                    recMenu.anchor.rect = Qt.rect(centerX - 112, Layout.topBarHeight, 224, 1);
+
+                    recMenu.clipProgress = 0.0;
+                    recMenu.visible = true;
+                    recFocusGrab.active = true;
+                    recMenu.isOpening = true;
+                    recMenu.clipProgress = 1.0;
                 }
                 cursorShape: Qt.PointingHandCursor
             }
@@ -611,6 +617,207 @@ Rectangle {
             TapHandler {
                 cursorShape: Qt.PointingHandCursor
                 onTapped: NotifHistoryService.panelOpen = !NotifHistoryService.panelOpen
+            }
+        }
+    }
+
+    PopupWindow {
+        id: recMenu
+        anchor.window: root.panelWindow
+        anchor.rect: Qt.rect(0, 0, 1, 1)
+
+        visible: false
+        color: "transparent"
+        implicitWidth: 224
+        implicitHeight: recSurface.implicitHeight
+
+        property bool isOpening: false
+        property real clipProgress: 0.0
+
+        function closeMenu() {
+            isOpening = false;
+            clipProgress = 0.0;
+            recFocusGrab.active = false;
+            recCloseTimer.start();
+        }
+
+        Behavior on clipProgress {
+            NumberAnimation {
+                duration: recMenu.isOpening ? 500 : 200
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: recMenu.isOpening
+                    ? [0.38, 1.21, 0.22, 1.0, 1.0, 1.0]
+                    : [0.3, 0.0, 0.8, 0.15, 1.0, 1.0]
+            }
+        }
+
+        HyprlandFocusGrab {
+            id: recFocusGrab
+            windows: [recMenu]
+            active: false
+            onCleared: recMenu.closeMenu()
+        }
+
+        Timer {
+            id: recCloseTimer
+            interval: 220
+            repeat: false
+            onTriggered: recMenu.visible = false
+        }
+
+        Item {
+            id: recClipItem
+            width: 224
+            height: recSurface.implicitHeight
+
+            transformOrigin: Item.Top
+            scale: recMenu.clipProgress
+            opacity: recMenu.clipProgress > 0 ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 100 } }
+
+            Canvas {
+                id: recLeftFillet
+                width: 32; height: 32
+                x: 0; y: 0
+                property color c: Theme.surface
+                onCChanged: requestPaint()
+                Component.onCompleted: requestPaint()
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.reset()
+                    ctx.fillStyle = c
+                    ctx.beginPath()
+                    ctx.moveTo(width, 0)
+                    ctx.lineTo(width, height)
+                    ctx.bezierCurveTo(width, height * 0.5, width * 0.5, 0, 0, 0)
+                    ctx.closePath()
+                    ctx.fill()
+                }
+            }
+
+            Canvas {
+                id: recRightFillet
+                width: 32; height: 32
+                x: 192; y: 0
+                property color c: Theme.surface
+                onCChanged: requestPaint()
+                Component.onCompleted: requestPaint()
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.reset()
+                    ctx.fillStyle = c
+                    ctx.beginPath()
+                    ctx.moveTo(0, 0)
+                    ctx.lineTo(0, height)
+                    ctx.bezierCurveTo(0, height * 0.5, width * 0.5, 0, width, 0)
+                    ctx.closePath()
+                    ctx.fill()
+                }
+            }
+
+            Rectangle {
+                id: recSurface
+                x: 32; y: 0
+                implicitWidth: 160
+                implicitHeight: recCol.implicitHeight + 12
+                color: Theme.surface
+                radius: 16
+
+                Rectangle { width: 16; height: 16; anchors.top: parent.top; anchors.left: parent.left; color: Theme.surface }
+                Rectangle { width: 16; height: 16; anchors.top: parent.top; anchors.right: parent.right; color: Theme.surface }
+
+                Column {
+                    id: recCol
+                    anchors { top: parent.top; left: parent.left; right: parent.right; topMargin: 6 }
+                    spacing: 0
+
+                    // Status header
+                    Item {
+                        width: recCol.width
+                        height: 40
+
+                        Row {
+                            anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 14 }
+                            spacing: 8
+
+                            Rectangle {
+                                width: 8; height: 8; radius: 4
+                                color: Theme.critical
+                                anchors.verticalCenter: parent.verticalCenter
+                                opacity: ControlPanelService.screenRecordingPaused ? 0.4 : 1.0
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ControlPanelService.screenRecordingPaused ? "Paused" : "Recording"
+                                color: Theme.on_surface
+                                font { family: "Google Sans Medium"; pixelSize: 13 }
+                            }
+                        }
+                        Text {
+                            anchors { verticalCenter: parent.verticalCenter; right: parent.right; rightMargin: 14 }
+                            text: ControlPanelService.screenRecordingElapsedText
+                            color: Theme.critical
+                            font { family: "Google Sans Medium"; pixelSize: 12 }
+                        }
+                    }
+
+                    Item {
+                        width: recCol.width
+                        height: 9
+                        Rectangle { anchors.centerIn: parent; width: parent.width - 16; height: 1; color: Theme.surface_container_highest }
+                    }
+
+                    Repeater {
+                        model: [
+                            { label: ControlPanelService.screenRecordingPaused ? "Resume" : "Pause",
+                              icon: ControlPanelService.screenRecordingPaused ? "󰐊" : "󰏤", action: "pause" },
+                            { label: "Stop", icon: "󰓛", action: "stop" }
+                        ]
+
+                        delegate: Item {
+                            width: recCol.width
+                            height: 36
+
+                            Rectangle {
+                                anchors { fill: parent; leftMargin: 4; rightMargin: 4 }
+                                radius: 8
+                                color: Theme.primary
+                                opacity: recItemHover.hovered ? 0.12 : 0
+                                Behavior on opacity { NumberAnimation { duration: 80 } }
+                            }
+
+                            Row {
+                                anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 14 }
+                                spacing: 8
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.icon
+                                    color: modelData.action === "stop" ? Theme.critical : Theme.on_surface
+                                    font { family: "JetBrainsMono Nerd Font"; pixelSize: 14 }
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.label
+                                    color: Theme.on_surface
+                                    font { family: "Google Sans Medium"; pixelSize: 13 }
+                                }
+                            }
+
+                            HoverHandler { id: recItemHover }
+                            TapHandler {
+                                cursorShape: Qt.PointingHandCursor
+                                onTapped: {
+                                    if (modelData.action === "stop") {
+                                        ControlPanelService.toggleScreenRecording();
+                                        recMenu.closeMenu();
+                                    } else {
+                                        ControlPanelService.pauseResumeRecording();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
