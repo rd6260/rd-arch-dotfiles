@@ -112,7 +112,7 @@ EOF
     property bool keepAwakeEnabled: false
 
     // --- Synced Lyrics overlay ---
-    property bool lyricsEnabled: true
+    property bool lyricsEnabled: false
 
     // --- Night Light ---
     property bool nightLightEnabled: false
