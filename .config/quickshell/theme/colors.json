@@ -2,7 +2,7 @@
   "_comment": "Material Design 3 Token Map",
   "primary": "#ffb4a8",
   "on_primary": "#561e16",
-  "primary_container": "#73342a",
+  "primary_container": "#73342b",
   "on_primary_container": "#ffdad4",
   "primary_fixed": "#ffdad4",
   "on_primary_fixed": "#3a0905",
@@ -36,7 +36,7 @@
   "outline": "#a08c89",
   "critical": "#ffb4ab",
   "on_critical": "#690005",
-  "source_color": "#ff0000",
+  "source_color": "#f91c10",
   "shadow": "#000000",
   "scrim": "#000000"
 }
