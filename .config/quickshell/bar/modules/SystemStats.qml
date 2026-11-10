@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Window
 import Quickshell
-import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import Quickshell.Services.SystemTray
 import qs.theme
@@ -13,7 +12,7 @@ import Qt5Compat.GraphicalEffects
 import "../../utilities/control-panel"
 
 /**
- * A unified system status indicator for Audio (Pipewire) and Power (UPower).
+ * A unified system status indicator for Power (UPower), tray, and Bluetooth.
  */
 Rectangle {
     id: root
@@ -27,18 +26,16 @@ Rectangle {
     color: Theme.surface_container
     radius: height / 2
 
-    // --- Audio State Management ---
-    readonly property var activeSink: Pipewire.defaultAudioSink
-    readonly property bool isMuted: activeSink?.audio?.muted ?? true
-    readonly property real volumeLevel: activeSink?.audio?.volume ?? 0.0
-
-    /** Ensures Pipewire sink stays reactive to external system changes. */
-    PwObjectTracker {
-        objects: root.activeSink ? [root.activeSink] : []
-    }
-
     // --- Tray State Management ---
     property bool isTrayExpanded: false
+
+    // --- Bluetooth State Management ---
+    property string btSelectedAddress: ""
+    readonly property var btConnected: Bluetooth.devices.values.filter(d => d.state === BluetoothDeviceState.Connected)
+    readonly property var btDevice: {
+        const found = btConnected.find(d => d.address === btSelectedAddress);
+        return found ?? btConnected[0] ?? null;
+    }
 
     Row {
         id: contentLayout
@@ -161,60 +158,6 @@ Rectangle {
 
         // --- Separator ---
         Rectangle {
-            width: 1
-            height: 16
-            color: Theme.outline_variant
-            anchors.verticalCenter: parent.verticalCenter
-        }
-
-        // --- Audio Module ---
-        Row {
-            id: volumeModule
-            spacing: 8
-            anchors.verticalCenter: parent.verticalCenter
-
-            Text {
-                id: volumeIcon
-                anchors.verticalCenter: parent.verticalCenter
-                font {
-                    family: "JetBrainsMono Nerd Font"
-                    pointSize: 10
-                }
-                color: root.isMuted ? Theme.critical : Theme.primary
-
-                text: {
-                    if (!root.activeSink?.audio)
-                        return ""; // No device
-                    if (root.isMuted)
-                        return ""; // Muted
-                    if (root.volumeLevel >= 0.6)
-                        return ""; // High
-                    if (root.volumeLevel >= 0.3)
-                        return ""; // Mid
-                    return "";     // Low
-                }
-            }
-
-            Text {
-                id: volumeLabel
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.on_surface
-                font {
-                    family: "Google Sans Medium"
-                    pointSize: 10
-                }
-                text: root.activeSink?.audio ? Math.round(root.volumeLevel * 100) + "%" : "--%"
-            }
-
-            TapHandler {
-                onTapped: if (root.activeSink?.audio)
-                    root.activeSink.audio.muted = !root.isMuted
-                cursorShape: Qt.PointingHandCursor
-            }
-        }
-
-        // --- Separator ---
-        Rectangle {
             visible: batteryModule.isVisible
             width: 1
             height: 16
@@ -329,83 +272,82 @@ Rectangle {
 
         // --- Separator (before Bluetooth) ---
         Rectangle {
-            visible: btRepeater.connectedCount > 0
+            visible: root.btDevice !== null
             width: 1
             height: 16
             color: Theme.outline_variant
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        // --- Bluetooth Device Batteries ---
+        // --- Bluetooth Device Battery (single, selectable) ---
         Row {
-            id: btBatteriesRow
-            spacing: 8
+            id: btModule
+            spacing: 6
             anchors.verticalCenter: parent.verticalCenter
-            visible: btRepeater.connectedCount > 0
+            visible: root.btDevice !== null
 
-            // Count helper so the separator can react
-            property int connectedCount: 0
+            readonly property bool hasBattery: root.btDevice !== null && root.btDevice.batteryAvailable
+            readonly property real btLevel: root.btDevice ? root.btDevice.battery : 0  // 0.0 – 1.0
 
-            Repeater {
-                id: btRepeater
+            // Battery icon (mirrors laptop battery icons; falls back to BT glyph)
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                font {
+                    family: "JetBrainsMono Nerd Font"
+                    pointSize: 10
+                }
+                color: btModule.hasBattery && btModule.btLevel < 0.2 ? Theme.critical : Theme.primary
+                text: {
+                    if (!btModule.hasBattery)
+                        return "";  // no battery info → Bluetooth glyph
+                    const pct = btModule.btLevel * 100;
+                    if (pct < 10)  return "󰁺";
+                    if (pct < 20)  return "󰁻";
+                    if (pct < 30)  return "󰁼";
+                    if (pct < 40)  return "󰁽";
+                    if (pct < 50)  return "󰁾";
+                    if (pct < 60)  return "󰁿";
+                    if (pct < 70)  return "󰂀";
+                    if (pct < 80)  return "󰂁";
+                    if (pct < 90)  return "󰂂";
+                    return "󰁹";   // 90–100 %
+                }
+            }
 
-                property int connectedCount: 0
+            // Battery percentage label
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                color: btModule.hasBattery && btModule.btLevel < 0.2 ? Theme.critical : Theme.on_surface
+                font {
+                    family: "Google Sans Medium"
+                    pointSize: 10
+                }
+                text: btModule.hasBattery ? Math.round(btModule.btLevel * 100) + "%" : "?%"
+            }
 
-                model: Bluetooth.devices
-
-                delegate: Row {
-                    spacing: 6
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    required property var modelData
-
-                    readonly property bool isConnected: modelData.state === BluetoothDeviceState.Connected
-                    readonly property bool hasBattery: isConnected && modelData.batteryAvailable
-                    readonly property real btLevel: modelData.battery  // 0.0 – 1.0
-
-                    visible: isConnected
-
-                    // Track connected devices so the parent Row / separator can react
-                    Component.onCompleted: if (isConnected) btRepeater.connectedCount++
-                    onIsConnectedChanged: btRepeater.connectedCount += isConnected ? 1 : -1
-
-                    // Battery icon (mirrors laptop battery icons; falls back to BT glyph)
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        font {
-                            family: "JetBrainsMono Nerd Font"
-                            pointSize: 10
-                        }
-                        color: hasBattery && btLevel < 0.2 ? Theme.critical : Theme.primary
-                        text: {
-                            if (!hasBattery)
-                                return "";  // no battery info → Bluetooth glyph
-                            const pct = btLevel * 100;
-                            if (pct < 10)  return "󰁺";
-                            if (pct < 20)  return "󰁻";
-                            if (pct < 30)  return "󰁼";
-                            if (pct < 40)  return "󰁽";
-                            if (pct < 50)  return "󰁾";
-                            if (pct < 60)  return "󰁿";
-                            if (pct < 70)  return "󰂀";
-                            if (pct < 80)  return "󰂁";
-                            if (pct < 90)  return "󰂂";
-                            return "󰁹";   // 90–100 %
-                        }
-                    }
-
-                    // Battery percentage label
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: hasBattery && btLevel < 0.2 ? Theme.critical : Theme.on_surface
-                        font {
-                            family: "Google Sans Medium"
-                            pointSize: 10
-                        }
-                        text: hasBattery ? Math.round(btLevel * 100) + "%" : "?%"
-                        visible: isConnected
+            HoverHandler {
+                id: btHover
+                onHoveredChanged: {
+                    if (hovered && root.panelWindow) {
+                        var mapped = btModule.mapToItem(root.panelWindow.contentItem, 0, 0);
+                        btTooltip.centerX = mapped.x + (btModule.width / 2);
                     }
                 }
+            }
+
+            TapHandler {
+                onTapped: {
+                    var mapped = btModule.mapToItem(root.panelWindow.contentItem, 0, 0);
+                    var centerX = mapped.x + (btModule.width / 2);
+                    btMenu.anchor.rect = Qt.rect(centerX - 112, Layout.topBarHeight, 224, 1);
+
+                    btMenu.clipProgress = 0.0;
+                    btMenu.visible = true;
+                    btFocusGrab.active = true;
+                    btMenu.isOpening = true;
+                    btMenu.clipProgress = 1.0;
+                }
+                cursorShape: Qt.PointingHandCursor
             }
         }
 
@@ -618,6 +560,195 @@ Rectangle {
             TapHandler {
                 cursorShape: Qt.PointingHandCursor
                 onTapped: NotifHistoryService.panelOpen = !NotifHistoryService.panelOpen
+            }
+        }
+    }
+
+    // --- Bluetooth hover tooltip (device name) ---
+    PopupWindow {
+        id: btTooltip
+        anchor.window: root.panelWindow
+
+        property real centerX: 0
+        anchor.rect: Qt.rect(centerX - width / 2, Layout.topBarHeight + 4, width, 1)
+
+        visible: btHover.hovered && !btMenu.visible && root.btDevice !== null
+        color: "transparent"
+        implicitWidth: btTipText.implicitWidth + 24
+        implicitHeight: 28
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 8
+            color: Theme.surface
+            Text {
+                id: btTipText
+                anchors.centerIn: parent
+                text: root.btDevice ? (root.btDevice.name || root.btDevice.deviceName || root.btDevice.address) : ""
+                color: Theme.on_surface
+                font { family: "Google Sans Medium"; pixelSize: 12 }
+            }
+        }
+    }
+
+    // --- Bluetooth device selection menu ---
+    PopupWindow {
+        id: btMenu
+        anchor.window: root.panelWindow
+        anchor.rect: Qt.rect(0, 0, 1, 1)
+
+        visible: false
+        color: "transparent"
+        implicitWidth: 224
+        implicitHeight: btSurface.implicitHeight
+
+        property bool isOpening: false
+        property real clipProgress: 0.0
+
+        function closeMenu() {
+            isOpening = false;
+            clipProgress = 0.0;
+            btFocusGrab.active = false;
+            btCloseTimer.start();
+        }
+
+        Behavior on clipProgress {
+            NumberAnimation {
+                duration: btMenu.isOpening ? 500 : 200
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: btMenu.isOpening
+                    ? [0.38, 1.21, 0.22, 1.0, 1.0, 1.0]
+                    : [0.3, 0.0, 0.8, 0.15, 1.0, 1.0]
+            }
+        }
+
+        HyprlandFocusGrab {
+            id: btFocusGrab
+            windows: [btMenu]
+            active: false
+            onCleared: btMenu.closeMenu()
+        }
+
+        Timer {
+            id: btCloseTimer
+            interval: 220
+            repeat: false
+            onTriggered: btMenu.visible = false
+        }
+
+        Item {
+            id: btClipItem
+            width: 224
+            height: btSurface.implicitHeight
+
+            transformOrigin: Item.Top
+            scale: btMenu.clipProgress
+            opacity: btMenu.clipProgress > 0 ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 100 } }
+
+            Canvas {
+                id: btLeftFillet
+                width: 32; height: 32
+                x: 0; y: 0
+                property color c: Theme.surface
+                onCChanged: requestPaint()
+                Component.onCompleted: requestPaint()
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.reset()
+                    ctx.fillStyle = c
+                    ctx.beginPath()
+                    ctx.moveTo(width, 0)
+                    ctx.lineTo(width, height)
+                    ctx.bezierCurveTo(width, height * 0.5, width * 0.5, 0, 0, 0)
+                    ctx.closePath()
+                    ctx.fill()
+                }
+            }
+
+            Canvas {
+                id: btRightFillet
+                width: 32; height: 32
+                x: 192; y: 0
+                property color c: Theme.surface
+                onCChanged: requestPaint()
+                Component.onCompleted: requestPaint()
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.reset()
+                    ctx.fillStyle = c
+                    ctx.beginPath()
+                    ctx.moveTo(0, 0)
+                    ctx.lineTo(0, height)
+                    ctx.bezierCurveTo(0, height * 0.5, width * 0.5, 0, width, 0)
+                    ctx.closePath()
+                    ctx.fill()
+                }
+            }
+
+            Rectangle {
+                id: btSurface
+                x: 32; y: 0
+                implicitWidth: 160
+                implicitHeight: btCol.implicitHeight + 12
+                color: Theme.surface
+                radius: 16
+
+                Rectangle { width: 16; height: 16; anchors.top: parent.top; anchors.left: parent.left; color: Theme.surface }
+                Rectangle { width: 16; height: 16; anchors.top: parent.top; anchors.right: parent.right; color: Theme.surface }
+
+                Column {
+                    id: btCol
+                    anchors { top: parent.top; left: parent.left; right: parent.right; topMargin: 6 }
+                    spacing: 0
+
+                    Repeater {
+                        model: root.btConnected
+
+                        delegate: Item {
+                            id: btItem
+                            required property var modelData
+                            width: btCol.width
+                            height: 36
+
+                            readonly property bool isActive: root.btDevice !== null && modelData.address === root.btDevice.address
+
+                            Rectangle {
+                                anchors { fill: parent; leftMargin: 4; rightMargin: 4 }
+                                radius: 8
+                                color: btItem.isActive ? Theme.primary_container : Theme.primary
+                                opacity: btItem.isActive ? 1.0 : (btItemHover.hovered ? 0.12 : 0)
+                                Behavior on opacity { NumberAnimation { duration: 80 } }
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                            }
+
+                            Text {
+                                anchors { verticalCenter: parent.verticalCenter; left: parent.left; right: btPct.left; leftMargin: 14; rightMargin: 8 }
+                                text: btItem.modelData.name || btItem.modelData.deviceName || btItem.modelData.address
+                                elide: Text.ElideRight
+                                color: btItem.isActive ? Theme.on_primary_container : Theme.on_surface
+                                font { family: "Google Sans Medium"; pixelSize: 13 }
+                            }
+
+                            Text {
+                                id: btPct
+                                anchors { verticalCenter: parent.verticalCenter; right: parent.right; rightMargin: 14 }
+                                text: btItem.modelData.batteryAvailable ? Math.round(btItem.modelData.battery * 100) + "%" : ""
+                                color: btItem.isActive ? Theme.on_primary_container : Theme.on_surface_variant
+                                font { family: "Google Sans Medium"; pixelSize: 12 }
+                            }
+
+                            HoverHandler { id: btItemHover }
+                            TapHandler {
+                                cursorShape: Qt.PointingHandCursor
+                                onTapped: {
+                                    root.btSelectedAddress = btItem.modelData.address;
+                                    btMenu.closeMenu();
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
