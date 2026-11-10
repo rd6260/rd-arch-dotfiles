@@ -1,11 +1,13 @@
 -- Define the monitor output names
 local monitor1 = "eDP-1"
 local monitor2 = "DP-1"
+local monitorIIIT = "HDMI-A-1"
+local monitorTandem = "EXT-1"
 
 -- Monitor Setup --------------------------------------------------------------
 hl.monitor({
   output = monitor1,
-  mode = "1920x1080@60.00",
+  mode = "1920x1080@144.00",
   position = "auto",
   scale = 1,
 })
@@ -14,9 +16,30 @@ hl.monitor({
   output = monitor2,
   mode = "1920x1080@60.00",
   position = "auto-center-up",
+  -- position = "auto-left",
   transform = 0,
   scale = 1,
+  -- mirror = monitor1,
 })
+
+-- hl.monitor({
+-- 	output = monitorTandem,
+-- 	-- mode = "1920x1080@60.00",
+-- 	position = "auto-left",
+--   -- mirror = monitor1,
+--   transform = 0,
+-- 	-- scale = 2,
+-- })
+
+hl.monitor({
+	output = monitorIIIT,
+	mode = "1920x1080@60.00",
+	-- position = "auto-center-up",
+  mirror = monitor1,
+  transform = 0,
+	scale = 1,
+})
+
 
 
 -- ----------------------------------------------------------------------------

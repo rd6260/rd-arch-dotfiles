@@ -27,6 +27,7 @@ hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("quickshell -p ~/.config/quic
 -- Screenshot
 hl.bind("PRINT", hl.dsp.exec_cmd("~/.local/bin/screenshot-util all"))          -- all monitors
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("~/.local/bin/screenshot-util selective")) -- selective area
+hl.bind(mainMod .. " + PRINT", hl.dsp.exec_cmd("~/.local/bin/screenshot-util current")) -- current monitor
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
