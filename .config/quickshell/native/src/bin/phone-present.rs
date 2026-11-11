@@ -48,6 +48,14 @@ trait BluezObjects {
 trait Login1 {
     fn get_session(&self, id: &str) -> zbus::Result<OwnedObjectPath>;
     fn get_session_by_pid(&self, pid: u32) -> zbus::Result<OwnedObjectPath>;
+    fn get_user(&self, uid: u32) -> zbus::Result<OwnedObjectPath>;
+}
+
+#[proxy(interface = "org.freedesktop.login1.User", default_service = "org.freedesktop.login1")]
+trait User {
+    /// The user's graphical session: (session id, object path)
+    #[zbus(property)]
+    fn display(&self) -> zbus::Result<(String, OwnedObjectPath)>;
 }
 
 #[proxy(interface = "org.freedesktop.login1.Session", default_service = "org.freedesktop.login1")]
@@ -109,7 +117,20 @@ async fn session_path(conn: &Connection) -> Result<OwnedObjectPath> {
             return Ok(p);
         }
     }
-    login.get_session_by_pid(std::process::id()).await.context("cannot find the logind session")
+    if let Ok(p) = login.get_session_by_pid(std::process::id()).await {
+        return Ok(p);
+    }
+    // Not inside a session (e.g. the shell was started as a systemd user
+    // service by uwsm / systemd-run): fall back to the user's graphical
+    // session, the same one `loginctl lock-session` picks.
+    use std::os::unix::fs::MetadataExt;
+    let uid = std::fs::metadata("/proc/self")?.uid();
+    let user = UserProxy::builder(conn).path(login.get_user(uid).await?)?.build().await?;
+    let (_, path) = user.display().await.context("cannot find the logind session")?;
+    if path.as_str() == "/" {
+        bail!("cannot find the logind session: user has no graphical session");
+    }
+    Ok(path)
 }
 
 #[derive(Parser, Debug)]

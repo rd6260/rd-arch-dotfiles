@@ -1,10 +1,12 @@
 //@ pragma UseQApplication
 import Quickshell
+import Quickshell.Io
 import QtQuick
 import "bar"
 import "notifications"
 import "utilities/clipboard"
 import "utilities/control-panel"
+import "utilities/audio-settings"
 import "utilities/media-panel"
 import "utilities/app-launcher"
 import "utilities/polkit"
@@ -54,6 +56,18 @@ ShellRoot {
     // Bottom-right corner control panel
     ControlPanel {
         id: controlPanel
+    }
+
+    // Full sound settings window (opened from the control panel volume arrow)
+    AudioSettings {
+        id: audioSettings
+    }
+    // `qs ipc call sound-settings toggle` (e.g. from a keybind)
+    IpcHandler {
+        target: "sound-settings"
+        function toggle(): void { ControlPanelService.audioSettingsOpen = !ControlPanelService.audioSettingsOpen; }
+        function open(): void { ControlPanelService.audioSettingsOpen = true; }
+        function close(): void { ControlPanelService.audioSettingsOpen = false; }
     }
 
     // Bottom-left corner media panel

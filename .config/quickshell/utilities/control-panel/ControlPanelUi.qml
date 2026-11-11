@@ -1,7 +1,6 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import Quickshell.Services.Pipewire
-import Quickshell.Bluetooth
 import Quickshell.Io
 import "."
 import "../../theme"
@@ -25,19 +24,7 @@ Item {
         ControlPanelService.panelOpen = false;
     }
 
-    // ── Pages ────────────────────────────────────────────────────────────────
-    property bool audioPage: false
-    readonly property real audioListMaxHeight: 380
-    readonly property real bodyHeight: audioPage
-        ? 12 + 48 + Math.min(audioList.implicitHeight, audioListMaxHeight) + 12
-        : contentCol.implicitHeight + 24
-
-    Connections {
-        target: ControlPanelService
-        function onPanelOpenChanged() {
-            if (!ControlPanelService.panelOpen) panelRoot.audioPage = false;
-        }
-    }
+    readonly property real bodyHeight: contentCol.implicitHeight + 24
 
     // Trackers so every sink/source/stream exposes a bound `audio` object
     PwObjectTracker {
@@ -60,10 +47,6 @@ Item {
             return list;
         }
     }
-
-    // ── Bluetooth state ──────────────────────────────────────────────────────
-    readonly property bool btEnabled: BluetoothManager.state === BluetoothState.On
-                                   || BluetoothManager.state === BluetoothState.TurningOn
 
     // ── Wi-Fi state ──────────────────────────────────────────────────────────
     property bool wifiEnabled: true
@@ -155,12 +138,6 @@ Item {
         }
     }
 
-    Process {
-        id: btRadioCmd
-        property bool targetState: true
-        command: ["bash", "-c", targetState ? "bluetoothctl power on" : "bluetoothctl power off"]
-        running: false
-    }
 
     // Check initial wifi state on startup
     Process {
@@ -320,7 +297,6 @@ Item {
         Column {
             id: contentCol
             width: parent.width
-            visible: !panelRoot.audioPage
             anchors.top: parent.top
             anchors.topMargin: 12
 
@@ -443,17 +419,6 @@ Item {
                     onToggled: ControlPanelService.keepAwakeEnabled = !ControlPanelService.keepAwakeEnabled
                 }
 
-                // ── Bluetooth ──
-                ToggleButton {
-                    icon: panelRoot.btEnabled ? "󰂯" : "󰂲"
-                    label: "Bluetooth"
-                    active: panelRoot.btEnabled
-                    cellWidth: toggleGrid.cellW
-                    onToggled: {
-                        btRadioCmd.targetState = !panelRoot.btEnabled;
-                        btRadioCmd.running = true;
-                    }
-                }
 
                 // ── Wi-Fi ──
                 ToggleButton {
@@ -590,7 +555,10 @@ Item {
             // ── Volume slider ──
             SliderRow {
                 hasArrow: true
-                onArrowClicked: panelRoot.audioPage = true
+                onArrowClicked: {
+                    ControlPanelService.panelOpen = false;
+                    ControlPanelService.audioSettingsOpen = true;
+                }
                 icon: panelRoot.speakerMuted ? "󰖁"
                     : panelRoot.speakerVol >= 0.6 ? "󰕾"
                     : panelRoot.speakerVol >= 0.3 ? "󰖀" : "󰕿"
@@ -969,92 +937,4 @@ Item {
         }
     }
 }
-
-    // ── Audio mixer page ──────────────────────────────────────────────────
-    Item {
-        id: audioPageItem
-        parent: panelBody
-        visible: panelRoot.audioPage
-        width: parent.width
-        y: 12
-        height: 48 + Math.min(audioList.implicitHeight, panelRoot.audioListMaxHeight)
-
-        Item {
-            id: audioHeader
-            width: parent.width; height: 48
-
-            Rectangle {
-                id: backBtn
-                width: 32; height: 32; radius: 16
-                anchors { left: parent.left; leftMargin: 20; verticalCenter: parent.verticalCenter }
-                color: backHover.containsMouse ? Qt.alpha(Theme.on_surface, 0.08) : "transparent"
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰅁"
-                    font { family: "JetBrainsMono Nerd Font"; pixelSize: 16 }
-                    color: Theme.on_surface
-                }
-                HoverHandler { id: backHover }
-                TapHandler { cursorShape: Qt.PointingHandCursor; onTapped: panelRoot.audioPage = false }
-            }
-            Text {
-                anchors { left: backBtn.right; leftMargin: 12; verticalCenter: parent.verticalCenter }
-                text: "Sound"
-                color: Theme.on_surface
-                font { family: "Google Sans Medium"; pixelSize: 16 }
-            }
-        }
-
-        Flickable {
-            y: audioHeader.height
-            width: parent.width
-            height: parent.height - audioHeader.height
-            contentWidth: width
-            contentHeight: audioList.implicitHeight
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-
-            Column {
-                id: audioList
-                width: parent.width
-
-                Text {
-                    leftPadding: 20; topPadding: 4; bottomPadding: 4
-                    text: "Output"
-                    color: Theme.on_surface_variant
-                    font { family: "Google Sans Medium"; pixelSize: 11 }
-                }
-                Repeater {
-                    model: Pipewire.nodes
-                    delegate: MixerDevice {
-                        required property var modelData
-                        device: modelData
-                        activeDevice: panelRoot.activeSink
-                        isSinkGroup: true
-                    }
-                }
-
-                Rectangle {
-                    width: parent.width - 32; height: 1
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: Theme.outline_variant; opacity: 0.4
-                }
-                Text {
-                    leftPadding: 20; topPadding: 8; bottomPadding: 4
-                    text: "Input"
-                    color: Theme.on_surface_variant
-                    font { family: "Google Sans Medium"; pixelSize: 11 }
-                }
-                Repeater {
-                    model: Pipewire.nodes
-                    delegate: MixerDevice {
-                        required property var modelData
-                        device: modelData
-                        activeDevice: panelRoot.activeSource
-                        isSinkGroup: false
-                    }
-                }
-            }
-        }
-    }
 }

@@ -1,7 +1,9 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Pipewire
 
 /**
  * Singleton holding all shared state for the control panel.
@@ -14,6 +16,78 @@ QtObject {
     property bool panelOpen: false
     // Name of the screen the panel is open on
     property string panelScreen: ""
+
+    // --- Audio settings window ---
+    property bool audioSettingsOpen: false
+
+    // --- Combined audio output ---
+    // One virtual sink ("combine_bt") that plays to several outputs at once.
+    // It runs in its own PipeWire instance managed by scripts/bt-combine.sh.
+    // State is read straight from PipeWire: on == the combine_bt node exists.
+    readonly property string _combineScript: Quickshell.shellDir + "/scripts/bt-combine.sh"
+    readonly property var btCombineNode: Pipewire.nodes.values.find(n => n.name === "combine_bt") ?? null
+    readonly property bool btCombineActive: btCombineNode !== null
+    property bool btCombineBusy: false
+    property bool _btCombineMakeDefault: false
+
+    // Saved member sink names. Empty = default (every Bluetooth output).
+    property var btCombineMembers: []
+    property bool btCombineMembersLoaded: false
+
+    property var _btCombineProc: Process {
+        property string action: "on"
+        command: [root._combineScript, action]
+        onExited: (code, status) => { if (code !== 0) root.btCombineBusy = false; }
+    }
+
+    property var _btCombineMembersGet: Process {
+        command: [root._combineScript, "members"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.btCombineMembers = text.split("\n").map(l => l.trim()).filter(l => l !== "");
+                root.btCombineMembersLoaded = true;
+            }
+        }
+    }
+
+    property var _btCombineMembersSet: Process {}
+
+    // Fallback in case the node never shows up / goes away
+    property var _btCombineTimeout: Timer {
+        interval: 5000
+        onTriggered: root.btCombineBusy = false
+    }
+
+    onBtCombineNodeChanged: {
+        btCombineBusy = false;
+        _btCombineTimeout.stop();
+        // Route audio to the combined sink as soon as it appears
+        if (btCombineNode && _btCombineMakeDefault) {
+            _btCombineMakeDefault = false;
+            Pipewire.preferredDefaultAudioSink = btCombineNode;
+        }
+    }
+
+    function setBtCombine(on) {
+        if (btCombineBusy || on === btCombineActive) return;
+        btCombineBusy = true;
+        _btCombineMakeDefault = on;
+        _btCombineProc.action = on ? "on" : "off";
+        _btCombineProc.running = true;
+        _btCombineTimeout.restart();
+    }
+
+    // Save the member list; a running combined sink is restarted with it.
+    function setBtCombineMembers(names) {
+        btCombineMembers = names;
+        // Restarting drops the node for a moment; keep it as the default output
+        if (btCombineActive && Pipewire.defaultAudioSink === btCombineNode)
+            _btCombineMakeDefault = true;
+        _btCombineMembersSet.running = false;
+        _btCombineMembersSet.command = [_combineScript, "set-members"].concat(names);
+        _btCombineMembersSet.running = true;
+    }
 
     // --- Audio Visualizer ---
     property bool visualizerEnabled: false
@@ -111,7 +185,8 @@ EOF
     // --- Phone Presence (auto-lock) ---
     // Enabled == the phone-present binary is running. It locks the session
     // whenever the phone is not nearby.
-    property bool phonePresenceEnabled: false
+    // On by default: starts with the shell.
+    property bool phonePresenceEnabled: true
     // Latest report from the binary: "" (not known yet) | "present" | "absent"
     property string phoneState: ""
     property string phoneName: ""
