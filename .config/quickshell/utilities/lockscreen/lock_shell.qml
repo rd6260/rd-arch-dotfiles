@@ -37,15 +37,24 @@ ShellRoot {
         id: sddmShim
     }
 
+    function unlock() {
+        if (authenticated) return;
+        authenticated = true;
+        if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") !== "")
+            Quickshell.execDetached(["hyprctl", "keyword", "misc:allow_session_lock_restore", "1"]);
+        Quickshell.execDetached(["loginctl", "unlock-session"]);
+        quitTimer.start();
+    }
+
     Connections {
         target: sddmShim.sddm
-        function onLoginSucceeded() {
-            shellRoot.authenticated = true;
-            if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") !== "")
-                Quickshell.execDetached(["hyprctl", "keyword", "misc:allow_session_lock_restore", "1"]);
-            Quickshell.execDetached(["loginctl", "unlock-session"]);
-            quitTimer.start();
-        }
+        function onLoginSucceeded() { shellRoot.unlock(); }
+    }
+
+    // qs -p <this dir> ipc call lockscreen unlock
+    IpcHandler {
+        target: "lockscreen"
+        function unlock(): void { shellRoot.unlock(); }
     }
 
     Timer {
