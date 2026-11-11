@@ -1,0 +1,8 @@
+{
+  "phone_present": {
+    "mac": "3C:B0:ED:16:24:6D",
+    "name": "clay_3",
+    "interval": 20,
+    "lock_cmd": "playerctl -a pause; pactl list short sinks | cut -f2 | xargs -I{} pactl set-sink-mute {} 1; loginctl lock-session"
+  }
+}

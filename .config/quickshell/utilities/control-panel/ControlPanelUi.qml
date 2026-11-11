@@ -550,6 +550,22 @@ Item {
                     onToggled: ControlPanelService.visualizerEnabled = !ControlPanelService.visualizerEnabled
                 }
 
+                // ── Phone Presence (auto-lock) ──
+                ToggleButton {
+                    icon: ControlPanelService.phonePresenceEnabled ? "󰈈" : "󰈉"
+                    label: "Presence"
+                    tooltip: {
+                        let who = ControlPanelService.phoneName !== "" ? ControlPanelService.phoneName : "Phone";
+                        if (!ControlPanelService.phonePresenceEnabled) return "Presence detection off";
+                        if (ControlPanelService.phoneState === "present") return who + " is present";
+                        if (ControlPanelService.phoneState === "absent") return who + " is not present";
+                        return "Checking for " + who + "…";
+                    }
+                    active: ControlPanelService.phonePresenceEnabled
+                    cellWidth: toggleGrid.cellW
+                    onToggled: ControlPanelService.togglePhonePresence()
+                }
+
                 // ── Synced Lyrics ──
                 ToggleButton {
                     icon: "󰝚"
@@ -823,6 +839,8 @@ Item {
     property bool   hasDropdown: false
     property bool   dropdownOpen: false
     property int    cellWidth: 88
+    property string tooltip: ""
+    property bool   tipShown: false
 
     signal toggled()
     signal longToggled()
@@ -911,7 +929,36 @@ Item {
             }
         }
 
-        HoverHandler { id: hoverHandler }
+        HoverHandler {
+            id: hoverHandler
+            onHoveredChanged: {
+                btn.tipShown = false;
+                if (hovered) tipDelay.restart(); else tipDelay.stop();
+            }
+        }
+
+        // Hover tooltip (only for buttons that set `tooltip`)
+        Timer {
+            id: tipDelay
+            interval: 400
+            onTriggered: btn.tipShown = true
+        }
+        Rectangle {
+            visible: btn.tipShown && btn.tooltip !== ""
+            z: 100
+            anchors { bottom: parent.top; bottomMargin: 6; left: parent.left }
+            width: tipText.implicitWidth + 20
+            height: tipText.implicitHeight + 12
+            radius: 8
+            color: Theme.inverse_surface
+            Text {
+                id: tipText
+                anchors.centerIn: parent
+                text: btn.tooltip
+                color: Theme.inverse_on_surface
+                font { family: "Google Sans Medium"; pixelSize: 11 }
+            }
+        }
 
         TapHandler {
             id: tapHandler

@@ -17,7 +17,7 @@ import "../../control-panel"
 QtObject {
     id: root
 
-    readonly property string binaryPath: "/home/senku/.config/quickshell/utilities/sync-lyrics/target/release/synced-lyrics"
+    readonly property string binaryPath: "/home/senku/.config/quickshell/native/target/release/synced-lyrics"
     readonly property int slideOffset: 40
 
     property string currentLyric: ""

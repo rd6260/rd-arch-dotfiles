@@ -108,6 +108,37 @@ EOF
         tailscaleEnabled = newState;
     }
 
+    // --- Phone Presence (auto-lock) ---
+    // Enabled == the phone-present binary is running. It locks the session
+    // whenever the phone is not nearby.
+    property bool phonePresenceEnabled: false
+    // Latest report from the binary: "" (not known yet) | "present" | "absent"
+    property string phoneState: ""
+    property string phoneName: ""
+
+    property var _phoneProc: Process {
+        running: root.phonePresenceEnabled
+        // Settings come from ~/.config/quickshell/config.json ("phone_present")
+        command: ["/home/senku/.config/quickshell/native/target/release/phone-present"]
+        stdout: SplitParser {
+            onRead: line => {
+                // "present <label>" / "absent <label>"
+                let i = line.indexOf(" ");
+                root.phoneState = i < 0 ? line : line.slice(0, i);
+                root.phoneName = i < 0 ? "" : line.slice(i + 1);
+            }
+        }
+        // If the binary dies (e.g. Bluetooth off), reflect that in the button.
+        onRunningChanged: if (!running) {
+            root.phonePresenceEnabled = false;
+            root.phoneState = "";
+        }
+    }
+
+    function togglePhonePresence() {
+        phonePresenceEnabled = !phonePresenceEnabled;
+    }
+
     // --- Keep Awake (UI only, backend to be implemented) ---
     property bool keepAwakeEnabled: false
 

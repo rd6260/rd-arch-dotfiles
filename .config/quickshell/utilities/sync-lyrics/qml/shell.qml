@@ -6,7 +6,7 @@ import QtQuick
 ShellRoot {
     id: root
 
-    property string binaryPath: "/home/senku/.config/quickshell/utilities/sync-lyrics/target/release/synced-lyrics"
+    property string binaryPath: "/home/senku/.config/quickshell/native/target/release/synced-lyrics"
     property int slideOffset: 40
     property string currentLyric: ""
     property bool isPlaying: false
