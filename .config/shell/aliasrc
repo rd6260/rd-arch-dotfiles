@@ -1,8 +1,48 @@
 #!/bin/bash
 
-alias random-ascii-shit="cat /dev/urandom | tr -dc '[:print:]'"
+to1080p() {
+  local input="$1"
+  if [[ ! -f "$input" ]]; then
+    echo "Usage: to1080p <video-file>" >&2
+    return 1
+  fi
 
-alias livewall='mpvpaper -o '\''--loop-file=inf --ytdl-format="bestvideo[height=1080]"'\'' all'
+  local base="${input%.*}"
+  local ext="${input##*.}"
+  local output="${base}_1080p.${ext}"
+
+  ffmpeg -i "$input" \
+    -vf "scale=-2:1080" \
+    -c:v libx264 -crf 20 -preset medium \
+    -an \
+    "$output"
+}
+
+
+ytm() {
+  if [ -z "$1" ]; then
+    echo "Usage: ytm <youtube-music-url> [more urls...]"
+    return 1
+  fi
+
+  yt-dlp \
+    -x --audio-format mp3 --audio-quality 0 \
+    --embed-metadata --embed-thumbnail \
+    --convert-thumbnails jpg \
+    --ppa "ThumbnailsConvertor:-vf crop=min(iw\,ih):min(iw\,ih)" \
+    --parse-metadata "%(artist,artists.0,uploader)s:%(meta_artist)s" \
+    --parse-metadata "%(album_artist,artist,artists.0,uploader)s:%(meta_album_artist)s" \
+    --parse-metadata "%(title)s:%(meta_title)s" \
+    --parse-metadata "%(album,playlist_title|)s:%(meta_album)s" \
+    --parse-metadata "%(release_date,upload_date)s:%(meta_date)s" \
+    --parse-metadata "%(track_number,playlist_index|)s:%(meta_track)s" \
+    --parse-metadata "%(genre|)s:%(meta_genre)s" \
+    -o "%(artist,artists.0,uploader)s - %(title)s.%(ext)s" \
+    --replace-in-metadata "meta_date" "^(\d{4})(\d{2})(\d{2})$" "\1-\2-\3" \
+    "$@"
+}
+
+alias random-ascii-shit="cat /dev/urandom | tr -dc '[:print:]'"
 
 yt-jelly() {
   yt-dlp -f "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b" \
@@ -15,7 +55,6 @@ yt-jelly() {
 
 }
 
-
 now() {
   timenow=$(date '+%H:%M %d/%m/%Y')
   echo $timenow
@@ -27,30 +66,8 @@ qr() {
   qrencode $1 -o /tmp/qr.png && chafa --align center /tmp/qr.png
 }
 
-
-# Clock in the terminal
-alias clock="tty-clock -c -B"
-
-# Lock the device and turn the screen off
-alias pc-lock="swaylock && hyprctl dispatch dpms off"
-alias pc-unlock="hyprctl dispatch dpms on && pkill -SIGUSR1 swaylock"
-
 # opening files 
 alias open="xdg-open"
-
-# Hyprland display scale
-alias scale-up="hyprctl keyword monitor ',,,1.3'"
-alias scale-down="hyprctl keyword monitor ',,,1.0'"
-
-# Dunst notification
-alias nhis="dunstctl history-pop"
-alias nhisc="dunstctl close-all"
-
-
-# For using gnu stow for dotfile management
-alias stowit='stow --adopt --target=$HOME .'
-
-alias musicplay='mpd; mpd-discord-rpc>>/dev/null &; ncm'
 
 alias fman='compgen -c | fzf-tmux | xargs man'
 
@@ -61,12 +78,12 @@ alias ls='eza -1 --icons=auto' # short list
 alias ll='eza -lha --icons=auto --sort=name --group-directories-first' # long list all
 alias ld='eza -lhD --icons=auto' # long list dirs
 alias lt='eza --icons=auto --tree' # list folder as tree
-alias un='$aurhelper -Rns' # uninstall package
-alias up='$aurhelper -Syu' # update system/package/aur
-alias pl='$aurhelper -Qs' # list installed package
-alias pa='$aurhelper -Ss' # list available package
-alias pc='$aurhelper -Sc' # remove unused cache
-alias po='$aurhelper -Qtdq | $aurhelper -Rns -' # remove unused packages, also try > $aurhelper -Qqd | $aurhelper -Rsu --print -
+# alias un='$aurhelper -Rns' # uninstall package
+# alias up='$aurhelper -Syu' # update system/package/aur
+# alias pl='$aurhelper -Qs' # list installed package
+# alias pa='$aurhelper -Ss' # list available package
+# alias pc='$aurhelper -Sc' # remove unused cache
+# alias po='$aurhelper -Qtdq | $aurhelper -Rns -' # remove unused packages, also try > $aurhelper -Qqd | $aurhelper -Rsu --print -
 
 # Directory navigation shortcuts
 alias ..='cd ..'
@@ -80,62 +97,21 @@ alias mkdir='mkdir -p'
 
 alias cat="bat -pp"
 
-#code as codium (flatpak)
-alias code="codium"
-
-# alias replasma="kquitapp5 plasmashell && kstart5 plasmashell"
-# alias replasma2="killall plasmashell && kstart5 plasmashell"
-
 alias bpkg="pacman -Qq | fzf --preview 'pacman -Qil {}' --layout=reverse --bind 'enter:execute(pacman -Qil {} | less)'"
 alias bpkga="pacman -Slq | fzf --preview 'pacman -Si {}' --layout=reverse"
 
 alias levelup="sudo pacman -Syu && paru -Syu"
 alias yadl="yt-dlp -x --audio-format mp3"
 
-alias bluebird="dumbpython -m spotdl download"
-alias bb="spotdl --audio=piped download"
-
-
 alias vi="nvim"
-
-alias dumbpython="/home/senku/.local/src/dumbpython/bin/python"
-alias dumbpip="/home/senku/.local/src/dumbpython/bin/pip3"
-
-alias hst="cat ~/.zsh_history | tac | fzf | tr -d '\n' | xclip -selection c"
-
-alias getpath="find -type f | fzf | sed 's/^..//' | tr -d '\n' | xclip -selection c"
-
-alias copy-to-clipboard="xclip -selection c"
-
-alias please="gum input --password | sudo -nS"
-
-alias activatedumb="source ~/.local/src/dumbpython/bin/activate"
-
 alias ncm="ncmpcpp"
-
-alias what-is-the-disk-usage="du -h --max-depth=1 | sort -rh"
-
 alias ytdl-in-mkv="yt-dlp -f 'bestvideo[height=1080]+bestaudio/best' --merge-output-format mkv"
-
 alias live-alan-becker="mpv 'https://www.youtube.com/@alanbecker/live'"
-
-alias anime="dumbpython -m fastanime"
-
 alias tmux="tmux -u"
 
-# alias gify="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa --align center ~/Pictures/gifs/{})'"
 alias figy="ls ~/Pictures/gifs | fzf --bind 'enter:execute(chafa --center on --format ansi ~/Pictures/gifs/{})'"
 
 alias remove-orphans="pacman -Qdtq | sudo pacman -Rns -"
-
-alias hentai="dumbpython ~/dev/yajurveda/nhentai/nhentai/command.py"
-
-# alias arts="while true; do chafa --align center ~/Downloads/xenotrip/\$(ls -1 ~/Downloads/xenotrip | shuf -n 1) && sleep 5; done"
-alias arts="while true; do chafa --align center --format ansi ~/Pictures/xenotrip/\$(ls -1 ~/Pictures/xenotrip | shuf -n 1) && sleep 9; done"
-
-alias amegakure-mount="sudo mount /dev/nvme1n1p4 /mnt/amegakure"
-
-# alias lt='ls --human-readable --size -1 -S --classify'
 
 alias phone-mirror='scrcpy --shortcut-mod=ralt -S'
 alias phone-otg='scrcpy --shortcut-mod=ralt --otg'
@@ -144,20 +120,11 @@ alias phone-webcam='scrcpy --video-source=camera -m1024 --no-playback --no-audio
 alias bonsai="cbonsai -ilS -L 70 -m 'talk is overrated'"
 alias bonsai-no-sleep="cbonsai -il -L 70 -m 'talk is overrated'"
 
-alias source-dumbpython="source ~/.development/dumbpython/bin/activate"
-
-# (set -- $(ip -4 -o addr |awk '$2!~/^lo/'); echo ${4%/*})
-# (set -- $(ip -6 -o addr |awk '$2!~/^lo/'); echo ${4%/*})
 alias ipv4="ip addr show | grep 'inet ' | grep -v '127.0.0.1' | cut -d' ' -f6 | cut -d/ -f1"
-
 alias ipv6="ip addr show | grep 'inet6 ' | cut -d ' ' -f6 | sed -n '2p'"
 
-
-# Remove unused dependencies
-alias autorem='orphans=$(pacman -Qdtq); [ -z "$orphans" ] && echo "There are no orphaned packages" || sudo pacman -Rsc $orphans'
-
 # Show potential upgrades (needs yay)
-alias hmmm='yay -Sy &> /dev/null && yay -Qu'
+alias hmmm='paru -Sy &> /dev/null && paru -Qu'
 
 # Show weather forecast in your city
 alias how-is-the-weather='curl wttr.in/dharwad | head -n -1'
@@ -179,7 +146,6 @@ alias syncwatch="syncplay --no-gui \
 
 # Pipes a list of package name and respective description into less
 alias pkglist='pacman -Qs --color=always | less -R'
-
 
 # for managing configs with git bare ripository
 alias config='/usr/bin/git --git-dir=$HOME/dev/inventory/rd-arch-dotfiles/.git --work-tree=$HOME'
@@ -224,51 +190,4 @@ spni() {
 playyt() {
 	mpc add "$(yt-dlp --extract-audio -g -f "bestaudio/best" $1)"
 	mpc play $(mpc playlist | wc -l)
-}
-
-yotest() {
-	theinput="$(cat -)"
-    while IFS= $theinput ; do
-        # Process each line with the provided argument
-	echo "here is the line"
-        echo "$line"
-
-    done
-}
-
-
-
-
-# NOTEL this is from someone else i found a reddit post
-# I used something like that until I decided to automatically cd to the mounted path, and unmount via path as well:
-udm() {
-    cd "$(udisksctl mount -b "$@" | tee /dev/stderr | sed 's/.* at \(.*\)$/\1/')"
-}
-udum() {
-    udisksctl unmount -b "$@" || udisksctl unmount -p "$@"
-}
-
-
-#open scratch notes
-ntest() {
-  choice=$(printf "Python\nGo\nText\nEtc" | fzf-tmux --prompt="Choose a file type: ")
-
-  case $choice in
-    Python)
-      nvim ~/dev/test.py
-      ;;
-    Text)
-      nvim ~/dev/test.txt
-      ;;
-    Go)
-      nvim ~/dev/test.go
-      ;;
-    Etc)
-      nvim ~/dev/test.md
-      ;;
-    *)
-      echo "Invalid choice. Exiting."
-      exit 1
-      ;;
-  esac
 }

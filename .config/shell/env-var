@@ -6,7 +6,7 @@ export ANDROID_HOME="$HOME/.local/src/Android/Sdk"
 export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools"
 
 # flutter
-export PATH="$PATH:$HOME/.local/src/flutter/bin"
+export PATH="$PATH:$HOME/.flutter/flutter/bin/"
 
 
 # flutterfire 
