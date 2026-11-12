@@ -155,17 +155,47 @@ Item {
         }
     }
 
-    // Read current brightness on startup
+    // Find the backlight device brightnessctl uses (name,class,current,pct,max)
+    property string backlightDev: ""
+    property real backlightMax: 0
     Process {
         id: brightnessGet
-        command: ["bash", "-c", "brightnessctl -m | awk -F, '{print $4}' | tr -d '%'"]
+        command: ["brightnessctl", "-m"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                let pct = parseFloat(text.trim());
+                const f = text.trim().split("\n")[0].split(",");
+                if (f.length < 5) return;
+                panelRoot.backlightMax = parseFloat(f[4]);
+                panelRoot.backlightDev = f[0];
+                const pct = parseFloat(f[3]);
                 if (!isNaN(pct)) panelRoot.brightnessValue = pct / 100.0;
             }
         }
+    }
+
+    // Follow brightness changes made elsewhere (keys, brightnessctl, etc.).
+    // sysfs doesn't send inotify events, so re-read the file while the panel
+    // is open. It's a tiny read with no process spawn.
+    FileView {
+        id: backlightFile
+        path: panelRoot.backlightDev !== ""
+            ? "/sys/class/backlight/" + panelRoot.backlightDev + "/brightness" : ""
+        onLoaded: {
+            // Our own change is still being applied: don't jump the slider
+            if (panelRoot.brightnessDragging || brightnessDebounce.running || brightnessSet.running) return;
+            const cur = parseFloat(text());
+            if (isNaN(cur) || panelRoot.backlightMax <= 0) return;
+            const v = Math.max(0, Math.min(1, cur / panelRoot.backlightMax));
+            if (Math.abs(v - panelRoot.brightnessValue) > 0.005) panelRoot.brightnessValue = v;
+        }
+    }
+    Timer {
+        interval: 400
+        repeat: true
+        triggeredOnStart: true
+        running: ControlPanelService.panelOpen && panelRoot.backlightDev !== ""
+        onTriggered: backlightFile.reload()
     }
 
     // Set brightness (debounced via Timer)

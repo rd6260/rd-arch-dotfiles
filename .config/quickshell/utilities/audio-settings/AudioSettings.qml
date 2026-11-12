@@ -89,7 +89,7 @@ LazyLoader {
             Column {
                 id: header
                 x: 24; y: 24
-                width: parent.width - 48
+                width: parent.width - 48 - closeBtn.width
                 spacing: 4
 
                 Text {
@@ -108,6 +108,25 @@ LazyLoader {
                         return "Playing on " + (s.name === "combine_bt" ? "Combined output" : A.label(s));
                     }
                 }
+            }
+
+            // ── Close ───────────────────────────────────────────────────────
+            Rectangle {
+                id: closeBtn
+                anchors { top: parent.top; topMargin: 20; right: parent.right; rightMargin: 20 }
+                width: 36; height: 36; radius: 18
+                color: closeHover.hovered ? Theme.surface_container_high : "transparent"
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰅖"
+                    font { family: "JetBrainsMono Nerd Font"; pixelSize: 18 }
+                    color: closeHover.hovered ? Theme.on_surface : Theme.on_surface_variant
+                }
+
+                HoverHandler { id: closeHover; cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: ControlPanelService.audioSettingsOpen = false }
             }
 
             // ── Tabs ────────────────────────────────────────────────────────
